@@ -129,6 +129,10 @@ function meBox(){document.getElementById('meBox').innerHTML=ME?`You: <b>${ME}</b
 function askWho(){const m=document.getElementById('who');m.style.display='flex';const i=document.getElementById('whoInput');i.value=ME;i.focus();}
 document.getElementById('whoSave').onclick=()=>{const v=document.getElementById('whoInput').value.trim();if(!v)return;ME=v;localStorage.setItem('voter',v);document.getElementById('who').style.display='none';meBox();render();};
 const grid=document.getElementById('grid');
+// Preload: when a card nears the viewport, warm all its photos from the proxy/idealista
+const pf=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const d=e.target._d;
+  if(d&&!d._pf){d._pf=1;const n=(d.image_urls||[]).length;for(let i=0;i<n;i++){const im=new Image();im.src='/img/'+d.id+'/'+i;}}
+  pf.unobserve(e.target);}});},{rootMargin:'900px'});
 function bucket(d){const c=cum(d),vs=Object.values(d.votes||{});
  if(vs.includes('dislike')&&c<0)return 'out';
  if(c>0&&vs.length)return 'top';
@@ -181,7 +185,7 @@ function render(){
    let sx=0,sy=0;hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
    hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
      if(Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
-  grid.appendChild(c);
+  c._d=d;grid.appendChild(c);pf.observe(c);
  });
 }
 document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
