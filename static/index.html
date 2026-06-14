@@ -95,6 +95,18 @@ const VV={like:2,maybe:1,dislike:-3};
 const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
 const cum=d=>Object.values(d.votes||{}).reduce((s,v)=>s+(VV[v]||0),0);
 const initial=s=>(s||"?").trim().charAt(0).toUpperCase();
+const VEMO={like:'👍',maybe:'🤔',dislike:'👎'};
+function tallyHtml(d){const e=Object.entries(d.votes||{});return e.length?e.map(([w,v])=>`<span class="badge ${v}">${initial(w)} ${VEMO[v]}</span>`).join(''):'<span class="badge">no votes yet</span>';}
+function refreshVotes(d){
+ const el=document.querySelector('.card[data-id="'+(window.CSS&&CSS.escape?CSS.escape(d.id):d.id)+'"]');if(!el)return;
+ const b=bucket(d),mv=d.votes[ME],sc=cum(d);
+ el.classList.toggle('top',b==='top');el.classList.toggle('out',b==='out');
+ let s=el.querySelector('.score');
+ if(sc){if(!s){s=document.createElement('div');s.className='score';el.querySelector('.hero').appendChild(s);}s.textContent=(sc>0?'+':'')+sc;}
+ else if(s)s.remove();
+ el.querySelectorAll('.vb').forEach(btn=>btn.classList.toggle('on',btn.dataset.v===mv));
+ const t=el.querySelector('.tally');if(t)t.innerHTML=tallyHtml(d);
+}
 // Italy projection
 const K=Math.cos(42*Math.PI/180);let VW=100,VH=120,proj;
 function setupProj(){let xs=[],ys=[];RINGS.forEach(r=>r.forEach(([lng,lat])=>{xs.push(lng*K);ys.push(-lat);}));
@@ -108,7 +120,7 @@ async function setVote(d,v){
  if(!ME){askWho();return;}
  const nv=(d.votes[ME]===v)?null:v;
  if(nv)d.votes[ME]=nv; else delete d.votes[ME];
- render();
+ refreshVotes(d);                 // update this card in place — do NOT reorder
  await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,voter:ME,vote:nv})});
 }
 function meBox(){document.getElementById('meBox').innerHTML=ME?`You: <b>${ME}</b> · <a id="chg">change</a>`:`<a id="chg">set your name</a>`;
@@ -138,8 +150,8 @@ function render(){
  grid.innerHTML='';
  rows.forEach((d,i)=>{
   const im=(d.image_urls||[]).length,zc=d.zona?('z'+d.zona):'',b=bucket(d),mv=d.votes[ME];
-  const c=document.createElement('div');c.className='card'+(b==='top'?' top':'')+(b==='out'?' out':'');
-  const tally=Object.entries(d.votes||{}).map(([who,v])=>`<span class="badge ${v}">${initial(who)} ${v==='like'?'👍':v==='maybe'?'🤔':'👎'}</span>`).join('')||'<span class="badge">no votes yet</span>';
+  const c=document.createElement('div');c.className='card'+(b==='top'?' top':'')+(b==='out'?' out':'');c.dataset.id=d.id;
+  const tally=tallyHtml(d);
   const sc=cum(d);
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
@@ -185,7 +197,8 @@ document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
    const fresh=await (await fetch('/api/listings')).json();
    const nsig=JSON.stringify(fresh.map(f=>[f.id,f.votes]));
    if(nsig===voteSig)return;            // nothing changed -> don't disturb the view
-   voteSig=nsig;const vm={};fresh.forEach(f=>vm[f.id]=f.votes);D.forEach(d=>{if(vm[d.id])d.votes=vm[d.id];});render();
+   voteSig=nsig;const vm={};fresh.forEach(f=>vm[f.id]=f.votes);
+   D.forEach(d=>{if(vm[d.id]&&JSON.stringify(vm[d.id])!==JSON.stringify(d.votes)){d.votes=vm[d.id];refreshVotes(d);}});  // update in place, no reorder
  }catch(e){}},15000);
 })();
 </script></body></html>
