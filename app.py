@@ -66,10 +66,15 @@ def img(lid: str, idx: int):
     url = r["image_urls"][idx]
     if url in _imgcache:
         return Response(_imgcache[url], media_type="image/jpeg", headers={"Cache-Control": "public,max-age=604800"})
-    try:
-        resp = httpx.get(url, headers={"User-Agent": UA, "Referer": "https://www.idealista.it/"}, timeout=20, follow_redirects=True)
-        data = resp.content
-    except Exception:
+    data = None
+    for attempt in range(2):
+        try:
+            resp = httpx.get(url, headers={"User-Agent": UA, "Referer": "https://www.idealista.it/"}, timeout=25, follow_redirects=True)
+            if resp.status_code == 200 and resp.content:
+                data = resp.content; break
+        except Exception:
+            pass
+    if data is None:
         raise HTTPException(502)
     if len(_imgcache) < 4000:
         _imgcache[url] = data
