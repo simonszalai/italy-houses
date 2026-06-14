@@ -5,7 +5,6 @@ Postgres-backed; shortlist state is shared across all clients. Env: DATABASE_URL
 import os, json, httpx
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 
@@ -66,5 +65,3 @@ def img(lid: str, idx: int):
 @app.get("/")
 def index():
     return FileResponse(os.path.join(HERE, "static", "index.html"))
-
-app.mount("/", StaticFiles(directory=os.path.join(HERE, "static")), name="static")
