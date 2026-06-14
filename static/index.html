@@ -80,7 +80,7 @@ h1{margin:0;font-size:20px;font-weight:650}
   <span class="pill" data-f="new">🆕 New</span>
   <input id="q" placeholder="comune / region…">
   <select id="reg"><option value="">All regions</option></select>
-  <select id="sort"><option value="ourscore">Our score</option><option value="score">Best match</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+  <select id="sort"><option value="score">Best match (rank)</option><option value="ourscore">Our votes</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
  </div>
 </header>
 <div class="grid" id="grid"></div>
@@ -161,7 +161,7 @@ function render(){
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
     ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
-    <div class="rank">#${i+1}</div>${sc?`<div class="score">${sc>0?'+':''}${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
+    <div class="rank">#${d.rank}</div>${sc?`<div class="score">${sc>0?'+':''}${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
    <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
    <div class="chips">
     <span class="chip"><b>${d.area||'?'}</b> m²</span>
@@ -195,6 +195,7 @@ document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
  RINGS=await (await fetch('/api/outline')).json();setupProj();meBox();
  if(!ME)askWho();
  D=await (await fetch('/api/listings')).json();
+ D.sort((a,b)=>(b.score||0)-(a.score||0));D.forEach((d,i)=>d.rank=i+1);   // persistent rank by match score
  const rsel=document.getElementById('reg');[...new Set(D.map(d=>d.region).filter(Boolean))].sort().forEach(r=>{const o=document.createElement('option');o.value=o.textContent=r;rsel.appendChild(o);});
  render();
  let voteSig=JSON.stringify(D.map(d=>[d.id,d.votes]));
