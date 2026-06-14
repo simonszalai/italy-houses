@@ -165,8 +165,9 @@ function render(){
    const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
    c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);c._block=Date.now();});
    c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);c._block=Date.now();});
-   let sx=0;hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
-   hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>35){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
+   let sx=0,sy=0;hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+   hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+     if(Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
   grid.appendChild(c);
  });
 }
@@ -179,6 +180,12 @@ document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
  D=await (await fetch('/api/listings')).json();
  const rsel=document.getElementById('reg');[...new Set(D.map(d=>d.region).filter(Boolean))].sort().forEach(r=>{const o=document.createElement('option');o.value=o.textContent=r;rsel.appendChild(o);});
  render();
- setInterval(async()=>{try{const fresh=await (await fetch('/api/listings')).json();const vm={};fresh.forEach(f=>vm[f.id]=f.votes);D.forEach(d=>{if(vm[d.id])d.votes=vm[d.id];});render();}catch(e){}},15000);
+ let voteSig=JSON.stringify(D.map(d=>[d.id,d.votes]));
+ setInterval(async()=>{try{
+   const fresh=await (await fetch('/api/listings')).json();
+   const nsig=JSON.stringify(fresh.map(f=>[f.id,f.votes]));
+   if(nsig===voteSig)return;            // nothing changed -> don't disturb the view
+   voteSig=nsig;const vm={};fresh.forEach(f=>vm[f.id]=f.votes);D.forEach(d=>{if(vm[d.id])d.votes=vm[d.id];});render();
+ }catch(e){}},15000);
 })();
 </script></body></html>
