@@ -1,0 +1,4 @@
+{"ts":"2026-06-14T13:56:58.055Z","cmd":"viewport","args":"1440x900","origin":"about:blank","durationMs":4,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-14T13:56:58.121Z","cmd":"goto","args":"http://127.0.0.1:8077/","origin":"http://127.0.0.1:8077/","durationMs":35,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-14T13:57:03.184Z","cmd":"js","args":"'cards='+document.querySelectorAll('.card').length+' heroLoaded='+(document.querySelector('.hero img')||{}).complete+' shortlisted='+document.querySelectorAll('.act.star.on').length","origin":"http://127.0.0.1:8077/","durationMs":2,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-14T13:57:03.323Z","cmd":"screenshot","args":"--viewport /tmp/webapp.png","origin":"http://127.0.0.1:8077/","durationMs":107,"status":"ok","hasCookies":false,"mode":"launched"}

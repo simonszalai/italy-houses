@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mountain houses · Sibillini, Alps & Apennines</title>
+<style>
+:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaed;--mut:#9aa3b2;--line:#2a2f3a;--accent:#5db07a;--amber:#e0a458;--red:#d9655e;--chip:#232834}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{padding:20px 28px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);z-index:20}
+h1{margin:0;font-size:20px;font-weight:650}
+.sub{color:var(--mut);font-size:13px;margin-top:4px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;align-items:center}
+.bar input,.bar select{font:13px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.pill{font:13px inherit;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+.pill.on{color:#0f1115;background:var(--accent);border-color:var(--accent);font-weight:650}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:22px 28px 70px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 26px rgba(93,176,122,.28)}
+.card.sl{border-color:var(--accent)}.card.rj{opacity:.5}
+.hero{position:relative;width:100%;aspect-ratio:4/3;background:#0a0c10;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+.rank{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.62);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;z-index:2}
+.price{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.68);border-radius:9px;padding:4px 11px;font-size:20px;font-weight:750;z-index:2}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:16px;cursor:pointer;z-index:3;opacity:0;transition:.15s}
+.card:hover .nav{opacity:1}.nav:hover{background:rgba(0,0,0,.85)}.nav.p{left:8px}.nav.n{right:8px}
+.count{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);border-radius:7px;padding:1px 7px;font-size:11px;z-index:2}
+.acts{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:3}
+.act{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.act:hover{background:rgba(0,0,0,.85)}
+.act.star.on{background:var(--accent);border-color:var(--accent);color:#0f1115}
+.act.maybe.on{background:var(--amber);border-color:var(--amber);color:#0f1115}
+.act.rej.on{background:var(--red);border-color:var(--red);color:#fff}
+.bd{padding:13px 15px 6px}
+.loc{font-weight:650;font-size:16px}.reg{color:var(--mut);font-size:12.5px;margin-top:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11.5px;color:var(--mut)}
+.chip b{color:var(--ink);font-weight:600}
+.chip.g{color:#bfe6cd;border-color:#2f5e42}.chip.z3,.chip.z4{color:#bfe6cd}.chip.z2{color:#e8d6a8}.chip.z1{color:#e9b0a0}
+.rsn{color:var(--mut);font-size:12px;margin:2px 0 8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 15px 14px;margin-top:auto}
+.km{font-size:11.5px;color:var(--mut)}
+.ita{width:62px;height:auto;flex:none}.ita path{fill:#222834;stroke:#3a4150;stroke-width:.4}
+.ita circle{fill:var(--accent);stroke:#0f1115;stroke-width:.5}.ita.blue circle{fill:#6ea8ff}
+</style></head><body>
+<header><h1>🏔️ Mountain houses — Sibillini, the Alps & the Apennines</h1>
+<div class="sub">Detached · 100–200 m² · garden 500–2,000 m² · ≤30 min from real mountains · sound shell · under €120k · <b id="n">…</b> matches · click a card to open the listing · ★ to shortlist</div>
+<div class="bar">
+ <span class="pill on" data-f="all">All</span>
+ <span class="pill" data-f="shortlisted">★ Shortlisted</span>
+ <span class="pill" data-f="maybe">~ Maybe</span>
+ <span class="pill" data-f="unseen">Unseen</span>
+ <span class="pill" data-f="rejected">✕ Rejected</span>
+ <input id="q" placeholder="filter comune / region…">
+ <select id="reg"><option value="">All regions</option></select>
+ <select id="sort"><option value="score">Best match</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+</div></header>
+<div class="grid" id="grid"></div>
+<script>
+let D=[], RINGS=[], filter="all";
+const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
+const K=Math.cos(42*Math.PI/180);let VW=100,VH=120,proj;
+function setupProj(){let xs=[],ys=[];RINGS.forEach(r=>r.forEach(([lng,lat])=>{xs.push(lng*K);ys.push(-lat);}));
+ const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
+ VH=+(VW*(mxy-mny)/(mxx-mnx)).toFixed(1);
+ proj=(lng,lat)=>[(lng*K-mnx)/(mxx-mnx)*VW,(-lat-mny)/(mxy-mny)*VH];
+ window.ITALY=RINGS.map(r=>'M'+r.map(([lng,lat])=>{const[x,y]=proj(lng,lat);return x.toFixed(1)+' '+y.toFixed(1);}).join('L')+'Z').join(' ');}
+function italySvg(d){if(!d.lat)return '';const[cx,cy]=proj(d.lng,d.lat);
+ return `<svg class="ita ${d.garden_band?'':'blue'}" viewBox="0 0 ${VW} ${VH}"><path d="${window.ITALY}"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.4"/></svg>`;}
+async function setStatus(d,st){const ns=(d.status===st)?null:st;
+ await fetch('/api/shortlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,status:ns})});
+ d.status=ns;render();}
+const grid=document.getElementById('grid');
+function render(){
+ const q=document.getElementById('q').value.toLowerCase(),rf=document.getElementById('reg').value,sort=document.getElementById('sort').value;
+ let rows=D.filter(d=>{
+   if(filter==='shortlisted'&&d.status!=='shortlisted')return false;
+   if(filter==='maybe'&&d.status!=='maybe')return false;
+   if(filter==='rejected'&&d.status!=='rejected')return false;
+   if(filter==='unseen'&&d.status)return false;
+   if(filter==='all'&&d.status==='rejected')return false;
+   if(q&&!((d.town||'')+' '+(d.region||'')).toLowerCase().includes(q))return false;
+   if(rf&&d.region!==rf)return false;return true;});
+ const key={score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
+ rows.sort((a,b)=>key[sort](a)-key[sort](b));
+ document.getElementById('n').textContent=rows.length;
+ grid.innerHTML='';
+ rows.forEach((d,i)=>{
+  const im=(d.image_urls||[]).length;const zc=d.zona?('z'+d.zona):'';
+  const c=document.createElement('div');c.className='card'+(d.status==='shortlisted'?' sl':'')+(d.status==='rejected'?' rj':'');
+  c.innerHTML=`<div class="hero">
+    <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
+    ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
+    <div class="acts">
+      <button class="act star ${d.status==='shortlisted'?'on':''}" title="Shortlist">★</button>
+      <button class="act maybe ${d.status==='maybe'?'on':''}" title="Maybe">~</button>
+      <button class="act rej ${d.status==='rejected'?'on':''}" title="Reject">✕</button>
+    </div>
+    <div class="rank">#${i+1}</div><div class="price">${fmt(d.price)}</div></div>
+   <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
+   <div class="chips">
+    <span class="chip"><b>${d.area||'?'}</b> m²</span>
+    <span class="chip ${d.garden_band?'g':''}"><b>${d.garden_m2?d.garden_m2.toLocaleString():'?'}</b> m² garden</span>
+    ${d.rooms?`<span class="chip"><b>${d.rooms}</b> loc.</span>`:''}
+    <span class="chip ${zc}">${d.zlabel}</span>
+    <span class="chip">4-sides: <b>${d.fs}</b></span>
+    ${d.interior&&d.interior!='unclear'?`<span class="chip">${d.interior}</span>`:''}
+   </div><div class="rsn">${d.reason||''}</div></div>
+   <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
+  c.addEventListener('click',()=>window.open(d.url,'_blank','noopener'));
+  c.querySelector('.act.star').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'shortlisted');});
+  c.querySelector('.act.maybe').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'maybe');});
+  c.querySelector('.act.rej').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'rejected');});
+  if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count');
+   const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
+   c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);});
+   c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);});}
+  grid.appendChild(c);
+ });
+}
+document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
+ document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;render();}));
+['q','reg','sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+(async()=>{
+ RINGS=await (await fetch('/api/outline')).json();setupProj();
+ D=await (await fetch('/api/listings')).json();
+ const rsel=document.getElementById('reg');[...new Set(D.map(d=>d.region).filter(Boolean))].sort().forEach(r=>{const o=document.createElement('option');o.value=o.textContent=r;rsel.appendChild(o);});
+ render();
+})();
+</script></body></html>
