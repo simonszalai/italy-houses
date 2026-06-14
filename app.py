@@ -1,6 +1,8 @@
-"""Italy house-search web app: serves the SPA, a JSON API, and an image proxy.
+"""Italy house-search web app: SPA + JSON API + image proxy.
 
-Postgres-backed; shortlist state is shared across all clients. Env: DATABASE_URL.
+Postgres-backed. Two people each vote like/maybe/dislike per listing (no auth — each
+device picks a name once); listings carry everyone's votes and a cumulative score.
+Env: DATABASE_URL.
 """
 import os, json, httpx
 from fastapi import FastAPI, Request, Response, HTTPException
@@ -16,34 +18,45 @@ pool = ConnectionPool(DSN, min_size=1, max_size=5, kwargs={"row_factory": dict_r
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
 _imgcache = {}
 
+with pool.connection() as _c:
+    _c.execute("""CREATE TABLE IF NOT EXISTS votes(
+        listing_id TEXT, voter TEXT, vote TEXT, updated_at TIMESTAMPTZ DEFAULT now(),
+        PRIMARY KEY (listing_id, voter))""")
+    _c.commit()
+
 app = FastAPI()
 
 @app.get("/api/listings")
 def listings():
     with pool.connection() as c:
-        return c.execute("""SELECT l.*, s.status, s.notes FROM listings l
-            LEFT JOIN shortlist s ON s.listing_id=l.id ORDER BY l.score DESC""").fetchall()
+        return c.execute("""SELECT l.*,
+            COALESCE(json_object_agg(v.voter, v.vote) FILTER (WHERE v.voter IS NOT NULL), '{}') AS votes
+            FROM listings l LEFT JOIN votes v ON v.listing_id=l.id
+            GROUP BY l.id ORDER BY l.score DESC""").fetchall()
+
+@app.get("/api/voters")
+def voters():
+    with pool.connection() as c:
+        return [r["voter"] for r in c.execute("SELECT DISTINCT voter FROM votes ORDER BY voter")]
+
+@app.post("/api/vote")
+async def vote(req: Request):
+    b = await req.json()
+    lid, voter, v = b.get("listing_id"), (b.get("voter") or "").strip(), b.get("vote")
+    if not lid or not voter: raise HTTPException(400, "listing_id and voter required")
+    with pool.connection() as c:
+        if v in (None, "", "none"):
+            c.execute("DELETE FROM votes WHERE listing_id=%s AND voter=%s", (lid, voter))
+        else:
+            c.execute("""INSERT INTO votes(listing_id,voter,vote,updated_at) VALUES(%s,%s,%s,now())
+                ON CONFLICT(listing_id,voter) DO UPDATE SET vote=EXCLUDED.vote,updated_at=now()""",
+                (lid, voter, v))
+        c.commit()
+    return {"ok": True}
 
 @app.get("/api/outline")
 def outline():
     return json.load(open(os.path.join(HERE, "static", "italy_outline.json")))
-
-@app.post("/api/shortlist")
-async def set_shortlist(req: Request):
-    b = await req.json()
-    lid = b.get("listing_id"); status = b.get("status"); notes = b.get("notes")
-    if not lid: raise HTTPException(400, "listing_id required")
-    with pool.connection() as c:
-        if status in (None, "", "none"):
-            c.execute("DELETE FROM shortlist WHERE listing_id=%s", (lid,))
-        else:
-            c.execute("""INSERT INTO shortlist(listing_id,status,notes,updated_at)
-                VALUES(%s,%s,%s,now())
-                ON CONFLICT(listing_id) DO UPDATE SET status=EXCLUDED.status,
-                  notes=COALESCE(EXCLUDED.notes,shortlist.notes),updated_at=now()""",
-                (lid, status, notes))
-        c.commit()
-    return {"ok": True}
 
 @app.get("/img/{lid}/{idx}")
 def img(lid: str, idx: int):

@@ -2,73 +2,100 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mountain houses · Sibillini, Alps & Apennines</title>
 <style>
-:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaed;--mut:#9aa3b2;--line:#2a2f3a;--accent:#5db07a;--amber:#e0a458;--red:#d9655e;--chip:#232834}
+:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaed;--mut:#9aa3b2;--line:#2a2f3a;--like:#5db07a;--maybe:#e0a458;--dis:#d9655e;--chip:#232834}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-header{padding:20px 28px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);z-index:20}
+header{padding:18px 28px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);z-index:20}
+.htop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 h1{margin:0;font-size:20px;font-weight:650}
-.sub{color:var(--mut);font-size:13px;margin-top:4px}
+.sub{color:var(--mut);font-size:12.5px;margin-top:4px}
+.me{font-size:12.5px;color:var(--mut);white-space:nowrap}
+.me b{color:var(--ink)}.me a{color:var(--like);cursor:pointer;text-decoration:underline}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;align-items:center}
 .bar input,.bar select{font:13px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
-.pill{font:13px inherit;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
-.pill.on{color:#0f1115;background:var(--accent);border-color:var(--accent);font-weight:650}
+.pill{font:13px inherit;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.pill.on{color:#0f1115;background:var(--like);border-color:var(--like);font-weight:650}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:22px 28px 70px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.grid{grid-template-columns:1fr}}
-.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s}
-.card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 26px rgba(93,176,122,.28)}
-.card.sl{border-color:var(--accent)}.card.rj{opacity:.5}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s,opacity .15s}
+.card:hover{border-color:var(--like);box-shadow:0 0 0 1px var(--like),0 0 26px rgba(93,176,122,.28)}
+.card.top{border-color:var(--like)}.card.out{opacity:.5}
 .hero{position:relative;width:100%;aspect-ratio:4/3;background:#0a0c10;overflow:hidden}
 .hero img{width:100%;height:100%;object-fit:cover;display:block}
 .rank{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.62);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;z-index:2}
+.score{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.62);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;z-index:2}
 .price{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.68);border-radius:9px;padding:4px 11px;font-size:20px;font-weight:750;z-index:2}
 .nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:16px;cursor:pointer;z-index:3;opacity:0;transition:.15s}
 .card:hover .nav{opacity:1}.nav:hover{background:rgba(0,0,0,.85)}.nav.p{left:8px}.nav.n{right:8px}
 .count{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);border-radius:7px;padding:1px 7px;font-size:11px;z-index:2}
-.acts{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:3}
-.act{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.act:hover{background:rgba(0,0,0,.85)}
-.act.star.on{background:var(--accent);border-color:var(--accent);color:#0f1115}
-.act.maybe.on{background:var(--amber);border-color:var(--amber);color:#0f1115}
-.act.rej.on{background:var(--red);border-color:var(--red);color:#fff}
 .bd{padding:13px 15px 6px}
 .loc{font-weight:650;font-size:16px}.reg{color:var(--mut);font-size:12.5px;margin-top:1px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11.5px;color:var(--mut)}
 .chip b{color:var(--ink);font-weight:600}
 .chip.g{color:#bfe6cd;border-color:#2f5e42}.chip.z3,.chip.z4{color:#bfe6cd}.chip.z2{color:#e8d6a8}.chip.z1{color:#e9b0a0}
-.rsn{color:var(--mut);font-size:12px;margin:2px 0 8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 15px 14px;margin-top:auto}
+.rsn{color:var(--mut);font-size:12px;margin:2px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vote{display:flex;gap:7px;align-items:center;margin:4px 0 2px}
+.vb{flex:1;border:1px solid var(--line);background:var(--chip);color:var(--mut);border-radius:9px;padding:7px 0;font-size:14px;cursor:pointer;text-align:center}
+.vb.like.on{background:var(--like);border-color:var(--like);color:#0f1115}
+.vb.maybe.on{background:var(--maybe);border-color:var(--maybe);color:#0f1115}
+.vb.dislike.on{background:var(--dis);border-color:var(--dis);color:#fff}
+.tally{display:flex;gap:6px;flex-wrap:wrap;min-height:20px;margin-top:7px}
+.badge{font-size:11px;border-radius:999px;padding:1px 8px;border:1px solid var(--line);color:var(--mut)}
+.badge.like{color:#bfe6cd;border-color:#2f5e42}.badge.maybe{color:#e8d6a8;border-color:#5e4f2f}.badge.dislike{color:#e9b0a0;border-color:#5e2f2f}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 15px 14px;margin-top:auto}
 .km{font-size:11.5px;color:var(--mut)}
 .ita{width:62px;height:auto;flex:none}.ita path{fill:#222834;stroke:#3a4150;stroke-width:.4}
-.ita circle{fill:var(--accent);stroke:#0f1115;stroke-width:.5}.ita.blue circle{fill:#6ea8ff}
-/* --- mobile overrides (kept last so they win over base rules) --- */
-@media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}}
+.ita circle{fill:var(--like);stroke:#0f1115;stroke-width:.5}.ita.blue circle{fill:#6ea8ff}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:50}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;width:320px;max-width:90vw}
+.mbox h3{margin:0 0 4px}.mbox p{color:var(--mut);font-size:13px;margin:0 0 14px}
+.mbox input{width:100%;font:15px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+.mbox button{margin-top:12px;width:100%;font:15px inherit;font-weight:650;color:#0f1115;background:var(--like);border:0;border-radius:9px;padding:10px;cursor:pointer}
+.ita circle{fill:var(--like)}
+/* --- mobile overrides (kept last so they win) --- */
+@media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}.card.top{border-color:var(--like)}}
 @media(max-width:720px){
- .grid{gap:14px;padding:14px 12px 60px}
- header{padding:14px 14px 12px}h1{font-size:17px;line-height:1.25}.sub{font-size:12px}
- .bar{gap:7px;margin-top:10px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
- .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:150px}.bar select{flex:none}
+ .grid{grid-template-columns:1fr;gap:14px;padding:14px 12px 60px}
+ header{padding:12px 14px 10px}h1{font-size:16px;line-height:1.25}.sub{font-size:11.5px}
+ .bar{gap:7px;margin-top:9px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+ .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:140px}.bar select{flex:none}
  .nav{opacity:1;width:40px;height:40px;font-size:20px}.nav.p{left:6px}.nav.n{right:6px}
- .act{width:38px;height:38px;font-size:16px}.acts{gap:8px}
+ .vb{padding:9px 0;font-size:15px}
 }
 </style></head><body>
-<header><h1>🏔️ Mountain houses — Sibillini, the Alps & the Apennines</h1>
-<div class="sub">Detached · 100–200 m² · garden 500–2,000 m² · ≤30 min from real mountains · sound shell · under €120k · <b id="n">…</b> matches · click a card to open the listing · ★ to shortlist</div>
-<div class="bar">
- <span class="pill on" data-f="all">All</span>
- <span class="pill" data-f="shortlisted">★ Shortlisted</span>
- <span class="pill" data-f="maybe">~ Maybe</span>
- <span class="pill" data-f="unseen">Unseen</span>
- <span class="pill" data-f="rejected">✕ Rejected</span>
- <input id="q" placeholder="filter comune / region…">
- <select id="reg"><option value="">All regions</option></select>
- <select id="sort"><option value="score">Best match</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
-</div></header>
+<header>
+ <div class="htop">
+  <div><h1>🏔️ Mountain houses — Sibillini, Alps & Apennines</h1>
+   <div class="sub">Detached · 100–200 m² · garden 500–2,000 m² · ≤30 min from mountains · under €120k · <b id="n">…</b> matches · tap a card to open · vote 👍🤔👎</div></div>
+  <div class="me" id="meBox"></div>
+ </div>
+ <div class="bar">
+  <span class="pill on" data-f="all">All</span>
+  <span class="pill" data-f="top">⭐ Top</span>
+  <span class="pill" data-f="ilike">👍 I like</span>
+  <span class="pill" data-f="talk">🤔 Talk</span>
+  <span class="pill" data-f="out">👎 Out</span>
+  <span class="pill" data-f="new">🆕 New</span>
+  <input id="q" placeholder="comune / region…">
+  <select id="reg"><option value="">All regions</option></select>
+  <select id="sort"><option value="ourscore">Our score</option><option value="score">Best match</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+ </div>
+</header>
 <div class="grid" id="grid"></div>
+<div class="modal" id="who" style="display:none"><div class="mbox">
+  <h3>Who are you?</h3><p>Pick a name so your votes show up next to your partner's. (Saved on this device.)</p>
+  <input id="whoInput" placeholder="your name" maxlength="20">
+  <button id="whoSave">Start</button>
+</div></div>
 <script>
 let D=[], RINGS=[], filter="all";
+let ME=localStorage.getItem('voter')||"";
+const VV={like:2,maybe:1,dislike:-3};
 const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
+const cum=d=>Object.values(d.votes||{}).reduce((s,v)=>s+(VV[v]||0),0);
+const initial=s=>(s||"?").trim().charAt(0).toUpperCase();
+// Italy projection
 const K=Math.cos(42*Math.PI/180);let VW=100,VH=120,proj;
 function setupProj(){let xs=[],ys=[];RINGS.forEach(r=>r.forEach(([lng,lat])=>{xs.push(lng*K);ys.push(-lat);}));
  const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
@@ -77,36 +104,47 @@ function setupProj(){let xs=[],ys=[];RINGS.forEach(r=>r.forEach(([lng,lat])=>{xs
  window.ITALY=RINGS.map(r=>'M'+r.map(([lng,lat])=>{const[x,y]=proj(lng,lat);return x.toFixed(1)+' '+y.toFixed(1);}).join('L')+'Z').join(' ');}
 function italySvg(d){if(!d.lat)return '';const[cx,cy]=proj(d.lng,d.lat);
  return `<svg class="ita ${d.garden_band?'':'blue'}" viewBox="0 0 ${VW} ${VH}"><path d="${window.ITALY}"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.4"/></svg>`;}
-async function setStatus(d,st){const ns=(d.status===st)?null:st;
- await fetch('/api/shortlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,status:ns})});
- d.status=ns;render();}
+async function setVote(d,v){
+ if(!ME){askWho();return;}
+ const nv=(d.votes[ME]===v)?null:v;
+ if(nv)d.votes[ME]=nv; else delete d.votes[ME];
+ render();
+ await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,voter:ME,vote:nv})});
+}
+function meBox(){document.getElementById('meBox').innerHTML=ME?`You: <b>${ME}</b> · <a id="chg">change</a>`:`<a id="chg">set your name</a>`;
+ document.getElementById('chg').onclick=askWho;}
+function askWho(){const m=document.getElementById('who');m.style.display='flex';const i=document.getElementById('whoInput');i.value=ME;i.focus();}
+document.getElementById('whoSave').onclick=()=>{const v=document.getElementById('whoInput').value.trim();if(!v)return;ME=v;localStorage.setItem('voter',v);document.getElementById('who').style.display='none';meBox();render();};
 const grid=document.getElementById('grid');
+function bucket(d){const c=cum(d),vs=Object.values(d.votes||{});
+ if(vs.includes('dislike')&&c<0)return 'out';
+ if(c>0&&vs.length)return 'top';
+ if(vs.includes('maybe')||(vs.includes('like')&&vs.includes('dislike')))return 'talk';
+ return 'plain';}
 function render(){
  const q=document.getElementById('q').value.toLowerCase(),rf=document.getElementById('reg').value,sort=document.getElementById('sort').value;
  let rows=D.filter(d=>{
-   if(filter==='shortlisted'&&d.status!=='shortlisted')return false;
-   if(filter==='maybe'&&d.status!=='maybe')return false;
-   if(filter==='rejected'&&d.status!=='rejected')return false;
-   if(filter==='unseen'&&d.status)return false;
-   if(filter==='all'&&d.status==='rejected')return false;
+   const b=bucket(d);
+   if(filter==='top'&&b!=='top')return false;
+   if(filter==='out'&&b!=='out')return false;
+   if(filter==='talk'&&b!=='talk')return false;
+   if(filter==='ilike'&&d.votes[ME]!=='like')return false;
+   if(filter==='new'&&(ME&&d.votes[ME]))return false;
    if(q&&!((d.town||'')+' '+(d.region||'')).toLowerCase().includes(q))return false;
    if(rf&&d.region!==rf)return false;return true;});
- const key={score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
- rows.sort((a,b)=>key[sort](a)-key[sort](b));
+ const key={ourscore:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
+ rows.sort((a,b)=>{const ka=key[sort](a),kb=key[sort](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
  document.getElementById('n').textContent=rows.length;
  grid.innerHTML='';
  rows.forEach((d,i)=>{
-  const im=(d.image_urls||[]).length;const zc=d.zona?('z'+d.zona):'';
-  const c=document.createElement('div');c.className='card'+(d.status==='shortlisted'?' sl':'')+(d.status==='rejected'?' rj':'');
+  const im=(d.image_urls||[]).length,zc=d.zona?('z'+d.zona):'',b=bucket(d),mv=d.votes[ME];
+  const c=document.createElement('div');c.className='card'+(b==='top'?' top':'')+(b==='out'?' out':'');
+  const tally=Object.entries(d.votes||{}).map(([who,v])=>`<span class="badge ${v}">${initial(who)} ${v==='like'?'👍':v==='maybe'?'🤔':'👎'}</span>`).join('')||'<span class="badge">no votes yet</span>';
+  const sc=cum(d);
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
     ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
-    <div class="acts">
-      <button class="act star ${d.status==='shortlisted'?'on':''}" title="Shortlist">★</button>
-      <button class="act maybe ${d.status==='maybe'?'on':''}" title="Maybe">~</button>
-      <button class="act rej ${d.status==='rejected'?'on':''}" title="Reject">✕</button>
-    </div>
-    <div class="rank">#${i+1}</div><div class="price">${fmt(d.price)}</div></div>
+    <div class="rank">#${i+1}</div>${sc?`<div class="score">${sc>0?'+':''}${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
    <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
    <div class="chips">
     <span class="chip"><b>${d.area||'?'}</b> m²</span>
@@ -114,21 +152,21 @@ function render(){
     ${d.rooms?`<span class="chip"><b>${d.rooms}</b> loc.</span>`:''}
     <span class="chip ${zc}">${d.zlabel}</span>
     <span class="chip">4-sides: <b>${d.fs}</b></span>
-    ${d.interior&&d.interior!='unclear'?`<span class="chip">${d.interior}</span>`:''}
-   </div><div class="rsn">${d.reason||''}</div></div>
+   </div><div class="rsn">${d.reason||''}</div>
+   <div class="vote">
+     <div class="vb like ${mv==='like'?'on':''}" data-v="like">👍 Like</div>
+     <div class="vb maybe ${mv==='maybe'?'on':''}" data-v="maybe">🤔 Maybe</div>
+     <div class="vb dislike ${mv==='dislike'?'on':''}" data-v="dislike">👎 No</div>
+   </div><div class="tally">${tally}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
   c.addEventListener('click',()=>{if(c._block&&Date.now()-c._block<450)return;window.open(d.url,'_blank','noopener');});
-  c.querySelector('.act.star').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'shortlisted');});
-  c.querySelector('.act.maybe').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'maybe');});
-  c.querySelector('.act.rej').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'rejected');});
+  c.querySelectorAll('.vb').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();c._block=Date.now();setVote(d,btn.dataset.v);}));
   if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count'),hero=c.querySelector('.hero');
    const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
    c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);c._block=Date.now();});
    c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);c._block=Date.now();});
-   let sx=0;
-   hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
-   hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;
-     if(Math.abs(dx)>35){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
+   let sx=0;hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+   hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>35){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
   grid.appendChild(c);
  });
 }
@@ -136,9 +174,11 @@ document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;render();}));
 ['q','reg','sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 (async()=>{
- RINGS=await (await fetch('/api/outline')).json();setupProj();
+ RINGS=await (await fetch('/api/outline')).json();setupProj();meBox();
+ if(!ME)askWho();
  D=await (await fetch('/api/listings')).json();
  const rsel=document.getElementById('reg');[...new Set(D.map(d=>d.region).filter(Boolean))].sort().forEach(r=>{const o=document.createElement('option');o.value=o.textContent=r;rsel.appendChild(o);});
  render();
+ setInterval(async()=>{try{const fresh=await (await fetch('/api/listings')).json();const vm={};fresh.forEach(f=>vm[f.id]=f.votes);D.forEach(d=>{if(vm[d.id])d.votes=vm[d.id];});render();}catch(e){}},15000);
 })();
 </script></body></html>
