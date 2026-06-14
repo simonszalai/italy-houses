@@ -43,6 +43,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 .tally{display:flex;gap:6px;flex-wrap:wrap;min-height:20px;margin-top:7px}
 .badge{font-size:11px;border-radius:999px;padding:1px 8px;border:1px solid var(--line);color:var(--mut)}
 .badge.like{color:#bfe6cd;border-color:#2f5e42}.badge.maybe{color:#e8d6a8;border-color:#5e4f2f}.badge.dislike{color:#e9b0a0;border-color:#5e2f2f}
+.badge.meb{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 15px 14px;margin-top:auto}
 .km{font-size:11.5px;color:var(--mut)}
 .ita{width:62px;height:auto;flex:none}.ita path{fill:#222834;stroke:#3a4150;stroke-width:.4}
@@ -96,7 +97,7 @@ const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
 const cum=d=>Object.values(d.votes||{}).reduce((s,v)=>s+(VV[v]||0),0);
 const initial=s=>(s||"?").trim().charAt(0).toUpperCase();
 const VEMO={like:'👍',maybe:'🤔',dislike:'👎'};
-function tallyHtml(d){const e=Object.entries(d.votes||{});return e.length?e.map(([w,v])=>`<span class="badge ${v}">${initial(w)} ${VEMO[v]}</span>`).join(''):'<span class="badge">no votes yet</span>';}
+function tallyHtml(d){const e=Object.entries(d.votes||{});return e.length?e.map(([w,v])=>`<span class="badge ${v}${w===ME?' meb':''}">${VEMO[v]} ${w.length>14?w.slice(0,14):w}</span>`).join(''):'<span class="badge">no votes yet</span>';}
 function refreshVotes(d){
  const el=document.querySelector('.card[data-id="'+(window.CSS&&CSS.escape?CSS.escape(d.id):d.id)+'"]');if(!el)return;
  const b=bucket(d),mv=d.votes[ME],sc=cum(d);
