@@ -14,16 +14,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 .pill.on{color:#0f1115;background:var(--accent);border-color:var(--accent);font-weight:650}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:22px 28px 70px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){
- .grid{grid-template-columns:1fr;gap:14px;padding:14px 12px 60px}
- header{padding:14px 14px 12px}h1{font-size:17px;line-height:1.25}.sub{font-size:12px}
- .bar{gap:7px;margin-top:10px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
- .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:150px}.bar select{flex:none}
- .nav{opacity:1;width:40px;height:40px;font-size:20px}.nav.p{left:6px}.nav.n{right:6px}
- .act{width:38px;height:38px;font-size:16px}.acts{gap:8px;top:10px;right:10px}
- .price{font-size:19px}
-}
-@media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 26px rgba(93,176,122,.28)}
 .card.sl{border-color:var(--accent)}.card.rj{opacity:.5}
@@ -51,6 +42,16 @@ h1{margin:0;font-size:20px;font-weight:650}
 .km{font-size:11.5px;color:var(--mut)}
 .ita{width:62px;height:auto;flex:none}.ita path{fill:#222834;stroke:#3a4150;stroke-width:.4}
 .ita circle{fill:var(--accent);stroke:#0f1115;stroke-width:.5}.ita.blue circle{fill:#6ea8ff}
+/* --- mobile overrides (kept last so they win over base rules) --- */
+@media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}}
+@media(max-width:720px){
+ .grid{gap:14px;padding:14px 12px 60px}
+ header{padding:14px 14px 12px}h1{font-size:17px;line-height:1.25}.sub{font-size:12px}
+ .bar{gap:7px;margin-top:10px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+ .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:150px}.bar select{flex:none}
+ .nav{opacity:1;width:40px;height:40px;font-size:20px}.nav.p{left:6px}.nav.n{right:6px}
+ .act{width:38px;height:38px;font-size:16px}.acts{gap:8px}
+}
 </style></head><body>
 <header><h1>🏔️ Mountain houses — Sibillini, the Alps & the Apennines</h1>
 <div class="sub">Detached · 100–200 m² · garden 500–2,000 m² · ≤30 min from real mountains · sound shell · under €120k · <b id="n">…</b> matches · click a card to open the listing · ★ to shortlist</div>
