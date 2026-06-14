@@ -14,7 +14,16 @@ h1{margin:0;font-size:20px;font-weight:650}
 .pill.on{color:#0f1115;background:var(--accent);border-color:var(--accent);font-weight:650}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:22px 28px 70px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.grid{grid-template-columns:1fr}}
+@media(max-width:720px){
+ .grid{grid-template-columns:1fr;gap:14px;padding:14px 12px 60px}
+ header{padding:14px 14px 12px}h1{font-size:17px;line-height:1.25}.sub{font-size:12px}
+ .bar{gap:7px;margin-top:10px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+ .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:150px}.bar select{flex:none}
+ .nav{opacity:1;width:40px;height:40px;font-size:20px}.nav.p{left:6px}.nav.n{right:6px}
+ .act{width:38px;height:38px;font-size:16px}.acts{gap:8px;top:10px;right:10px}
+ .price{font-size:19px}
+}
+@media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 26px rgba(93,176,122,.28)}
 .card.sl{border-color:var(--accent)}.card.rj{opacity:.5}
@@ -107,14 +116,18 @@ function render(){
     ${d.interior&&d.interior!='unclear'?`<span class="chip">${d.interior}</span>`:''}
    </div><div class="rsn">${d.reason||''}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
-  c.addEventListener('click',()=>window.open(d.url,'_blank','noopener'));
+  c.addEventListener('click',()=>{if(c._block&&Date.now()-c._block<450)return;window.open(d.url,'_blank','noopener');});
   c.querySelector('.act.star').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'shortlisted');});
   c.querySelector('.act.maybe').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'maybe');});
   c.querySelector('.act.rej').addEventListener('click',e=>{e.stopPropagation();setStatus(d,'rejected');});
-  if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count');
+  if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count'),hero=c.querySelector('.hero');
    const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
-   c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);});
-   c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);});}
+   c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);c._block=Date.now();});
+   c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);c._block=Date.now();});
+   let sx=0;
+   hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+   hero.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;
+     if(Math.abs(dx)>35){show(dx<0?idx+1:idx-1);c._block=Date.now();}},{passive:true});}
   grid.appendChild(c);
  });
 }
