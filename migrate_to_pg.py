@@ -6,10 +6,13 @@ and Italy-dot coords), and upserts into Postgres. Idempotent. Run:
 """
 import os, sys, json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".claude/skills/house-search/lib"))
-import db as sq, seismic, foursides
+import db as sq, seismic, foursides, access
 import psycopg
 
 ZLABEL = {"1": "Zona 1 (high)", "2": "Zona 2 (med)", "3": "Zona 3 (low)", "4": "Zona 4 (v.low)"}
+# Preference weights learned from the couple's ratings/comments (loved set skews Piemonte,
+# alt ~450-800, garden present, drivable). Car access is their #1 stated dealbreaker.
+REGION_PREF = {"Piemonte": 2.5, "Lombardia": 1.5, "Toscana": 1.5, "Valle d'Aosta": 1.0, "Marche": 1.0}
 DSN = os.environ["DATABASE_URL"]
 SEARCH = sys.argv[1] if len(sys.argv) > 1 else "sibillini-and-alps"
 
@@ -22,6 +25,7 @@ CREATE TABLE IF NOT EXISTS listings(
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS verdict TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS setting TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS alt INT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS access TEXT;
 CREATE TABLE IF NOT EXISTS shortlist(
   listing_id TEXT PRIMARY KEY, status TEXT, notes TEXT, updated_at TIMESTAMPTZ DEFAULT now());
 """
@@ -55,13 +59,24 @@ def rows():
         sz = seismic.lookup(r["town"], seismic.GEO_TO_SIGLA.get(r["province"]))
         if sz and sz["zona"] in ("3", "4"): s += 1
         if r["price"]: s += (crit["price_max"] - r["price"]) / 80000
+        # --- preference signal from ratings/comments ---
+        acc = access.classify(r["description"])
+        if acc == "foot": s -= 6          # their #1 dealbreaker: can't drive to it
+        elif acc == "car": s += 3
+        region = sz["region"] if sz else ""
+        s += REGION_PREF.get(region, 0)
+        a = r["alt"]
+        if a is not None:
+            if 400 <= a <= 900: s += 2     # loved-altitude band
+            elif 300 <= a < 400 or 900 < a <= 1100: s += 1
+        if g and 800 <= g <= 3000: s += 1.5   # they love a real garden / land to plant
         imgs = json.loads(r["image_urls_json"] or "[]")[:18]
         yield (r["listing_id"], SEARCH, r["price"], r["area"], g, band, r["rooms"], fs,
-               r["town"], (sz["region"] if sz else ""), (sz["zona"] if sz else None),
+               r["town"], region, (sz["zona"] if sz else None),
                (ZLABEL.get(sz["zona"]) if sz else "n/a"), round(r["mtn_dist_km"] or 0),
                (gz["lat"] if gz else None), (gz["lng"] if gz else None), sc.get("interior_state"),
                (r["reasons"] or "")[:300], round(s, 2), json.dumps(imgs),
-               f"https://www.idealista.it/immobile/{r['listing_id']}/", r["verdict"], sc.get("setting"), r["alt"])
+               f"https://www.idealista.it/immobile/{r['listing_id']}/", r["verdict"], sc.get("setting"), r["alt"], acc)
 
 def main():
     data = list(rows())
@@ -69,14 +84,14 @@ def main():
         conn.execute(SCHEMA)
         with conn.cursor() as cur:
             cur.executemany("""INSERT INTO listings
-              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt)
-              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt,access)
+              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
               ON CONFLICT (id) DO UPDATE SET price=EXCLUDED.price,area=EXCLUDED.area,garden_m2=EXCLUDED.garden_m2,
                 garden_band=EXCLUDED.garden_band,rooms=EXCLUDED.rooms,fs=EXCLUDED.fs,town=EXCLUDED.town,
                 region=EXCLUDED.region,zona=EXCLUDED.zona,zlabel=EXCLUDED.zlabel,mtn_km=EXCLUDED.mtn_km,
                 lat=EXCLUDED.lat,lng=EXCLUDED.lng,interior=EXCLUDED.interior,reason=EXCLUDED.reason,
                 score=EXCLUDED.score,image_urls=EXCLUDED.image_urls,url=EXCLUDED.url,
-                verdict=EXCLUDED.verdict,setting=EXCLUDED.setting,alt=EXCLUDED.alt""", data)
+                verdict=EXCLUDED.verdict,setting=EXCLUDED.setting,alt=EXCLUDED.alt,access=EXCLUDED.access""", data)
         conn.commit()
         n = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     print(f"migrated {len(data)} listings; table now has {n}")
