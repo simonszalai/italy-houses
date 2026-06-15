@@ -34,6 +34,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11.5px;color:var(--mut)}
 .chip b{color:var(--ink);font-weight:600}
 .chip.g{color:#bfe6cd;border-color:#2f5e42}.chip.z3,.chip.z4{color:#bfe6cd}.chip.z2{color:#e8d6a8}.chip.z1{color:#e9b0a0}
+.chip.set{color:#a8d5e8;border-color:#2f4f5e}.chip.mb{color:#e8d6a8;border-color:#5e4f2f;font-weight:700}
 .rsn{color:var(--mut);font-size:12px;margin:2px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rate{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 2px}
 .rb{flex:1 1 8%;min-width:25px;border:1px solid var(--line);background:var(--chip);color:var(--mut);border-radius:7px;padding:6px 0;font-size:12px;cursor:pointer;text-align:center;transition:.1s}
@@ -116,6 +117,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 </div></div>
 <script>
 let D=[], RINGS=[], filter="all";
+const SETLBL={forest_isolated:"🌲 forest",countryside:"countryside",edge_of_village:"edge of village",town:"town"};
 let ME=localStorage.getItem('voter')||"";
 const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
 const ratings=d=>Object.values(d.votes||{}).map(Number).filter(x=>x>0);
@@ -208,8 +210,11 @@ function render(){
     <span class="chip"><b>${d.area||'?'}</b> m²</span>
     <span class="chip ${d.garden_band?'g':''}"><b>${d.garden_m2?d.garden_m2.toLocaleString():'?'}</b> m² garden</span>
     ${d.rooms?`<span class="chip"><b>${d.rooms}</b> loc.</span>`:''}
+    ${d.alt?`<span class="chip"><b>${d.alt}</b> m alt.</span>`:''}
+    ${d.setting?`<span class="chip set">${SETLBL[d.setting]||d.setting}</span>`:''}
     <span class="chip ${zc}">${d.zlabel}</span>
     <span class="chip">4-sides: <b>${d.fs}</b></span>
+    ${d.verdict==='maybe'?`<span class="chip mb">maybe</span>`:''}
    </div><div class="rsn">${d.reason||''}</div>
    <div class="votewrap">${voteSection(d)}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;

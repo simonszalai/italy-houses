@@ -1,9 +1,0 @@
-{
-  "pid": 4304,
-  "port": 37020,
-  "token": "1c7f6842-e129-4441-9081-619fbbdea279",
-  "startedAt": "2026-06-15T12:22:11.304Z",
-  "serverPath": "/Users/simon/dev/agent-workflows/skills/gstack/browse/src/server.ts",
-  "mode": "launched",
-  "configHash": "303a7eeccc03078b"
-}
