@@ -19,7 +19,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .15s,border-color .15s,opacity .15s}
 .card:hover{border-color:var(--like);box-shadow:0 0 0 1px var(--like),0 0 26px rgba(93,176,122,.28)}
-.card.top{border-color:var(--like)}.card.out{opacity:.5}
+.card.top{border-color:var(--like)}
 .hero{position:relative;width:100%;aspect-ratio:4/3;background:#0a0c10;overflow:hidden}
 .hero img{width:100%;height:100%;object-fit:cover;display:block}
 .rank{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.62);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;z-index:2}
@@ -66,6 +66,13 @@ h1{margin:0;font-size:20px;font-weight:650}
 .mbox input{width:100%;font:15px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
 .mbox button{margin-top:12px;width:100%;font:15px inherit;font-weight:650;color:#0f1115;background:var(--like);border:0;border-radius:9px;padding:10px;cursor:pointer}
 .ita circle{fill:var(--like)}
+.ms{position:relative}
+.msbtn{font:13px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.mspanel{position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;z-index:30;min-width:170px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.mspanel label{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:13px;color:var(--ink);border-radius:7px;cursor:pointer;white-space:nowrap}
+.mspanel label:hover{background:var(--chip)}.mspanel input{accent-color:var(--like);width:15px;height:15px}
+.cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.setname{font-size:12px;color:var(--mut);opacity:.7;margin-top:8px}
 /* --- mobile overrides (kept last so they win) --- */
 @media(hover:none){.nav{opacity:1}.card:hover{box-shadow:none;border-color:var(--line)}.card.top{border-color:var(--like)}}
 @media(max-width:720px){
@@ -86,8 +93,19 @@ h1{margin:0;font-size:20px;font-weight:650}
  <div class="bar">
   <span class="pill on" data-f="all">All</span>
   <span class="pill" data-f="top">⭐ Top</span>
-  <span class="seg" id="areas"><span class="ac" data-a="wa">W. Alps</span><span class="ac" data-a="ca">C. Alps</span><span class="ac" data-a="ea">E. Alps</span><span class="ac" data-a="tu">Tuscany</span><span class="ac" data-a="ap">Apennines</span><span class="ac" data-a="other">Other</span></span>
+  <div class="ms" id="areaMs">
+   <button class="msbtn" id="areaBtn">All areas ▾</button>
+   <div class="mspanel" id="areaPanel" hidden>
+    <label><input type="checkbox" value="wa"> Western Alps</label>
+    <label><input type="checkbox" value="ca"> Central Alps</label>
+    <label><input type="checkbox" value="ea"> Eastern Alps</label>
+    <label><input type="checkbox" value="tu"> Tuscany</label>
+    <label><input type="checkbox" value="ap"> Apennines</label>
+    <label><input type="checkbox" value="other"> Other</label>
+   </div>
+  </div>
   <select id="sort"><option value="score">Best match (rank)</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+  <span class="cnt" id="cnt"></span>
  </div>
 </header>
 <div class="grid" id="grid"></div>
@@ -105,25 +123,18 @@ const cum=d=>ratings(d).reduce((s,v)=>s+v,0);
 const gradeColor=v=>`hsl(${Math.round((Math.max(1,Math.min(10,v))-1)/9*120)},62%,50%)`;
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const selectedAreas=new Set();
-function commentsHtml(d){return Object.entries(d.comments||{}).map(([w,t])=>`<div class="cmt"><b>${w===ME?'You':esc(w)}</b> ${esc(t)}</div>`).join('');}
+function othersHtml(d){return Object.entries(d.comments||{}).filter(([w])=>w!==ME).map(([w,t])=>`<div class="cmt"><b>${esc(w)}</b> ${esc(t)}</div>`).join('');}
 function voteSection(d){const mv=+(d.votes[ME]||0);
  return `<div class="rate">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div class="rb${mv===n?' on':''}" data-v="${n}"${mv===n?` style="background:${gradeColor(n)};border-color:${gradeColor(n)};color:#0f1115"`:''}>${n}</div>`).join('')}</div>
   <div class="tally">${tallyHtml(d)}</div>
-  <div class="cmts">${commentsHtml(d)}</div>
-  <button class="addc">💬 ${(d.comments||{})[ME]?'Edit your note':'Add a note'}</button>`;}
+  <div class="cmts">${othersHtml(d)}</div>
+  ${ME?`<textarea class="cta" rows="2" placeholder="add your note\u2026">${esc((d.comments||{})[ME]||'')}</textarea>`:`<div class="setname">name yourself (top-right) to add notes</div>`}`;}
 function bindVote(d,c){
  c.querySelectorAll('.rb').forEach(btn=>btn.onclick=e=>{e.stopPropagation();c._block=Date.now();setVote(d,+btn.dataset.v);});
- const a=c.querySelector('.addc');if(a)a.onclick=e=>{e.stopPropagation();c._block=Date.now();openCmt(d,c);};}
-function openCmt(d,c){if(!ME){askWho();return;}
- const vw=c.querySelector('.votewrap');if(vw.querySelector('.cmtedit'))return;
- const cur=(d.comments||{})[ME]||'';const btn=vw.querySelector('.addc');if(btn)btn.style.display='none';
- const ed=document.createElement('div');ed.className='cmtedit';
- ed.innerHTML=`<textarea class="cta" rows="2" placeholder="your note…"></textarea><div class="ctarow"><button class="savec">Save</button><button class="cancelc">Cancel</button></div>`;
- vw.appendChild(ed);ed.onclick=e=>e.stopPropagation();const ta=ed.querySelector('.cta');ta.value=cur;ta.focus();
- ed.querySelector('.savec').onclick=e=>{e.stopPropagation();saveCmt(d,ta.value.trim());};
- ed.querySelector('.cancelc').onclick=e=>{e.stopPropagation();ed.remove();if(btn)btn.style.display='';};}
+ const ta=c.querySelector('.cta');
+ if(ta){ta.onclick=e=>e.stopPropagation();ta.onpointerdown=e=>e.stopPropagation();
+  ta.oninput=()=>{c._block=Date.now();clearTimeout(ta._t);const v=ta.value;ta._t=setTimeout(()=>saveCmt(d,v.trim()),600);};}}
 async function saveCmt(d,text){if(!d.comments)d.comments={};if(text)d.comments[ME]=text;else delete d.comments[ME];
- refreshVotes(d);
  fetch('/api/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,voter:ME,comment:text||null})});}
 function area(reg){reg=reg||'';
  if(reg==='Piemonte'||reg==="Valle d'Aosta")return 'wa';
@@ -138,9 +149,12 @@ function refreshVotes(d){
  const b=bucket(d),mv=+(d.votes[ME]||0),sc=cum(d);
  el.classList.toggle('top',b==='top');el.classList.toggle('out',b==='out');
  let s=el.querySelector('.score');
- if(sc){if(!s){s=document.createElement('div');s.className='score';el.querySelector('.hero').appendChild(s);}s.textContent='Σ'+sc;}
+ if(sc){if(!s){s=document.createElement('div');s.className='score';el.querySelector('.hero').appendChild(s);}s.textContent='\u03a3'+sc;}
  else if(s)s.remove();
- const vw=el.querySelector('.votewrap');if(vw){vw.innerHTML=voteSection(d);bindVote(d,el);}
+ el.querySelectorAll('.rb').forEach(btn=>{const on=+btn.dataset.v===mv;btn.classList.toggle('on',on);btn.style.background=on?gradeColor(mv):'';btn.style.borderColor=on?gradeColor(mv):'';btn.style.color=on?'#0f1115':'';});
+ const t=el.querySelector('.tally');if(t)t.innerHTML=tallyHtml(d);
+ const cm=el.querySelector('.cmts');if(cm)cm.innerHTML=othersHtml(d);
+ const ta=el.querySelector('.cta');if(ta&&document.activeElement!==ta)ta.value=(d.comments||{})[ME]||'';
 }
 // Italy projection
 const K=Math.cos(42*Math.PI/180);let VW=100,VH=120,proj;
@@ -179,7 +193,7 @@ function render(){
  const eff=(filter==='top')?'sum':sort;   // ⭐ Top = sort by cumulative sum
  const key={sum:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
  rows.sort((a,b)=>{const ka=key[eff](a),kb=key[eff](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
- document.getElementById('n').textContent=rows.length;
+ document.getElementById('n').textContent=rows.length;document.getElementById('cnt').textContent=rows.length+' matches';
  grid.innerHTML='';
  rows.forEach((d,i)=>{
   const im=(d.image_urls||[]).length,zc=d.zona?('z'+d.zona):'',b=bucket(d);
@@ -215,7 +229,14 @@ function render(){
 }
 document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;render();}));
-document.querySelectorAll('#areas .ac').forEach(ch=>ch.addEventListener('click',()=>{const a=ch.dataset.a;if(selectedAreas.has(a)){selectedAreas.delete(a);ch.classList.remove('on');}else{selectedAreas.add(a);ch.classList.add('on');}render();}));
+const AREALBL={wa:'W. Alps',ca:'C. Alps',ea:'E. Alps',tu:'Tuscany',ap:'Apennines',other:'Other'};
+const areaBtn=document.getElementById('areaBtn'),areaPanel=document.getElementById('areaPanel');
+areaBtn.onclick=e=>{e.stopPropagation();areaPanel.hidden=!areaPanel.hidden;};
+document.addEventListener('click',e=>{if(!document.getElementById('areaMs').contains(e.target))areaPanel.hidden=true;});
+areaPanel.querySelectorAll('input').forEach(cb=>cb.onchange=()=>{
+ if(cb.checked)selectedAreas.add(cb.value);else selectedAreas.delete(cb.value);
+ areaBtn.textContent=(selectedAreas.size===0?'All areas':selectedAreas.size===1?AREALBL[[...selectedAreas][0]]:selectedAreas.size+' areas')+' \u25be';
+ render();});
 ['sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 (async()=>{
  RINGS=await (await fetch('/api/outline')).json();setupProj();meBox();
