@@ -20,8 +20,9 @@ _imgcache = {}
 
 with pool.connection() as _c:
     _c.execute("""CREATE TABLE IF NOT EXISTS votes(
-        listing_id TEXT, voter TEXT, vote TEXT, updated_at TIMESTAMPTZ DEFAULT now(),
+        listing_id TEXT, voter TEXT, vote TEXT, comment TEXT, updated_at TIMESTAMPTZ DEFAULT now(),
         PRIMARY KEY (listing_id, voter))""")
+    _c.execute("ALTER TABLE votes ADD COLUMN IF NOT EXISTS comment TEXT")
     _c.commit()
 
 app = FastAPI()
@@ -30,7 +31,8 @@ app = FastAPI()
 def listings():
     with pool.connection() as c:
         return c.execute("""SELECT l.*,
-            COALESCE(json_object_agg(v.voter, v.vote) FILTER (WHERE v.voter IS NOT NULL), '{}') AS votes
+            COALESCE(json_object_agg(v.voter, v.vote) FILTER (WHERE v.vote IS NOT NULL), '{}') AS votes,
+            COALESCE(json_object_agg(v.voter, v.comment) FILTER (WHERE v.comment IS NOT NULL AND v.comment<>''), '{}') AS comments
             FROM listings l LEFT JOIN votes v ON v.listing_id=l.id
             GROUP BY l.id ORDER BY l.score DESC""").fetchall()
 
@@ -46,11 +48,26 @@ async def vote(req: Request):
     if not lid or not voter: raise HTTPException(400, "listing_id and voter required")
     with pool.connection() as c:
         if v in (None, "", "none"):
-            c.execute("DELETE FROM votes WHERE listing_id=%s AND voter=%s", (lid, voter))
+            c.execute("UPDATE votes SET vote=NULL, updated_at=now() WHERE listing_id=%s AND voter=%s", (lid, voter))
         else:
             c.execute("""INSERT INTO votes(listing_id,voter,vote,updated_at) VALUES(%s,%s,%s,now())
                 ON CONFLICT(listing_id,voter) DO UPDATE SET vote=EXCLUDED.vote,updated_at=now()""",
                 (lid, voter, v))
+        c.execute("DELETE FROM votes WHERE listing_id=%s AND voter=%s AND vote IS NULL AND (comment IS NULL OR comment='')", (lid, voter))
+        c.commit()
+    return {"ok": True}
+
+@app.post("/api/comment")
+async def comment(req: Request):
+    b = await req.json()
+    lid, voter = b.get("listing_id"), (b.get("voter") or "").strip()
+    cm = (b.get("comment") or "").strip() or None
+    if not lid or not voter: raise HTTPException(400, "listing_id and voter required")
+    with pool.connection() as c:
+        c.execute("""INSERT INTO votes(listing_id,voter,comment,updated_at) VALUES(%s,%s,%s,now())
+            ON CONFLICT(listing_id,voter) DO UPDATE SET comment=EXCLUDED.comment,updated_at=now()""",
+            (lid, voter, cm))
+        c.execute("DELETE FROM votes WHERE listing_id=%s AND voter=%s AND vote IS NULL AND (comment IS NULL OR comment='')", (lid, voter))
         c.commit()
     return {"ok": True}
 

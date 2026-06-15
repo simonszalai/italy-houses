@@ -42,6 +42,20 @@ h1{margin:0;font-size:20px;font-weight:650}
 .badge{font-size:11px;border-radius:999px;padding:1px 8px;border:1px solid var(--line);color:var(--mut)}
 .badge.like{color:#bfe6cd;border-color:#2f5e42}.badge.maybe{color:#e8d6a8;border-color:#5e4f2f}.badge.dislike{color:#e9b0a0;border-color:#5e2f2f}
 .badge.meb{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.seg{display:flex;gap:6px}
+.ac{font:13px inherit;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.ac.on{color:#0f1115;background:#6ea8ff;border-color:#6ea8ff;font-weight:650}
+.cmts{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.cmt{font-size:12px;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.cmt b{color:var(--mut);font-weight:600;margin-right:4px}
+.addc{margin-top:8px;font:12px inherit;background:none;border:1px dashed var(--line);color:var(--mut);border-radius:8px;padding:6px 10px;cursor:pointer}
+.addc:hover{border-color:var(--mut);color:var(--ink)}
+.cmtedit{margin-top:8px}
+.cta{width:100%;font:13px inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:7px 9px;resize:vertical}
+.ctarow{display:flex;gap:6px;margin-top:6px}
+.ctarow button{font:12px inherit;border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
+.ctarow .savec{background:var(--like);border-color:var(--like);color:#0f1115;font-weight:650}
+.ctarow .cancelc{background:var(--chip);color:var(--mut)}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 15px 14px;margin-top:auto}
 .km{font-size:11.5px;color:var(--mut)}
 .ita{width:62px;height:auto;flex:none}.ita path{fill:#222834;stroke:#3a4150;stroke-width:.4}
@@ -58,7 +72,7 @@ h1{margin:0;font-size:20px;font-weight:650}
  .grid{grid-template-columns:1fr;gap:14px;padding:14px 12px 60px}
  header{padding:12px 14px 10px}h1{font-size:16px;line-height:1.25}.sub{font-size:11.5px}
  .bar{gap:7px;margin-top:9px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
- .bar::-webkit-scrollbar{display:none}.pill{flex:none}.bar input{min-width:140px}.bar select{flex:none}
+ .bar::-webkit-scrollbar{display:none}.pill,.ac{flex:none}.seg{flex:none}.bar select{flex:none}
  .nav{opacity:1;width:40px;height:40px;font-size:20px}.nav.p{left:6px}.nav.n{right:6px}
  .rb{padding:9px 0;font-size:14px;min-width:28px}
 }
@@ -72,8 +86,8 @@ h1{margin:0;font-size:20px;font-weight:650}
  <div class="bar">
   <span class="pill on" data-f="all">All</span>
   <span class="pill" data-f="top">⭐ Top</span>
-  <select id="reg"><option value="">All areas</option><option value="wa">Western Alps</option><option value="ca">Central Alps</option><option value="ea">Eastern Alps</option><option value="tu">Tuscany</option><option value="ap">Apennines</option><option value="other">Other</option></select>
-  <select id="sort"><option value="score">Best match (rank)</option><option value="ourscore">Our votes</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+  <span class="seg" id="areas"><span class="ac" data-a="wa">W. Alps</span><span class="ac" data-a="ca">C. Alps</span><span class="ac" data-a="ea">E. Alps</span><span class="ac" data-a="tu">Tuscany</span><span class="ac" data-a="ap">Apennines</span><span class="ac" data-a="other">Other</span></span>
+  <select id="sort"><option value="score">Best match (rank)</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
  </div>
 </header>
 <div class="grid" id="grid"></div>
@@ -89,6 +103,28 @@ const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
 const ratings=d=>Object.values(d.votes||{}).map(Number).filter(x=>x>0);
 const cum=d=>ratings(d).reduce((s,v)=>s+v,0);
 const gradeColor=v=>`hsl(${Math.round((Math.max(1,Math.min(10,v))-1)/9*120)},62%,50%)`;
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const selectedAreas=new Set();
+function commentsHtml(d){return Object.entries(d.comments||{}).map(([w,t])=>`<div class="cmt"><b>${w===ME?'You':esc(w)}</b> ${esc(t)}</div>`).join('');}
+function voteSection(d){const mv=+(d.votes[ME]||0);
+ return `<div class="rate">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div class="rb${mv===n?' on':''}" data-v="${n}"${mv===n?` style="background:${gradeColor(n)};border-color:${gradeColor(n)};color:#0f1115"`:''}>${n}</div>`).join('')}</div>
+  <div class="tally">${tallyHtml(d)}</div>
+  <div class="cmts">${commentsHtml(d)}</div>
+  <button class="addc">💬 ${(d.comments||{})[ME]?'Edit your note':'Add a note'}</button>`;}
+function bindVote(d,c){
+ c.querySelectorAll('.rb').forEach(btn=>btn.onclick=e=>{e.stopPropagation();c._block=Date.now();setVote(d,+btn.dataset.v);});
+ const a=c.querySelector('.addc');if(a)a.onclick=e=>{e.stopPropagation();c._block=Date.now();openCmt(d,c);};}
+function openCmt(d,c){if(!ME){askWho();return;}
+ const vw=c.querySelector('.votewrap');if(vw.querySelector('.cmtedit'))return;
+ const cur=(d.comments||{})[ME]||'';const btn=vw.querySelector('.addc');if(btn)btn.style.display='none';
+ const ed=document.createElement('div');ed.className='cmtedit';
+ ed.innerHTML=`<textarea class="cta" rows="2" placeholder="your note…"></textarea><div class="ctarow"><button class="savec">Save</button><button class="cancelc">Cancel</button></div>`;
+ vw.appendChild(ed);ed.onclick=e=>e.stopPropagation();const ta=ed.querySelector('.cta');ta.value=cur;ta.focus();
+ ed.querySelector('.savec').onclick=e=>{e.stopPropagation();saveCmt(d,ta.value.trim());};
+ ed.querySelector('.cancelc').onclick=e=>{e.stopPropagation();ed.remove();if(btn)btn.style.display='';};}
+async function saveCmt(d,text){if(!d.comments)d.comments={};if(text)d.comments[ME]=text;else delete d.comments[ME];
+ refreshVotes(d);
+ fetch('/api/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:d.id,voter:ME,comment:text||null})});}
 function area(reg){reg=reg||'';
  if(reg==='Piemonte'||reg==="Valle d'Aosta")return 'wa';
  if(reg==='Lombardia')return 'ca';
@@ -104,8 +140,7 @@ function refreshVotes(d){
  let s=el.querySelector('.score');
  if(sc){if(!s){s=document.createElement('div');s.className='score';el.querySelector('.hero').appendChild(s);}s.textContent='Σ'+sc;}
  else if(s)s.remove();
- el.querySelectorAll('.rb').forEach(btn=>{const on=+btn.dataset.v===mv;btn.classList.toggle('on',on);btn.style.background=on?gradeColor(mv):'';btn.style.borderColor=on?gradeColor(mv):'';btn.style.color=on?'#0f1115':'';});
- const t=el.querySelector('.tally');if(t)t.innerHTML=tallyHtml(d);
+ const vw=el.querySelector('.votewrap');if(vw){vw.innerHTML=voteSection(d);bindVote(d,el);}
 }
 // Italy projection
 const K=Math.cos(42*Math.PI/180);let VW=100,VH=120,proj;
@@ -139,18 +174,16 @@ const pf=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const
 function bucket(d){const r=ratings(d);if(!r.length)return 'plain';const a=cum(d)/r.length;
  if(a>=7)return 'top';if(a<=3)return 'out';return 'plain';}
 function render(){
- const rf=document.getElementById('reg').value,sort=document.getElementById('sort').value;
- let rows=D.filter(d=>{
-   if(filter==='top'&&bucket(d)!=='top')return false;
-   if(rf&&area(d.region)!==rf)return false;return true;});
- const key={ourscore:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
- rows.sort((a,b)=>{const ka=key[sort](a),kb=key[sort](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
+ const sort=document.getElementById('sort').value;
+ let rows=D.filter(d=>selectedAreas.size===0||selectedAreas.has(area(d.region)));
+ const eff=(filter==='top')?'sum':sort;   // ⭐ Top = sort by cumulative sum
+ const key={sum:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
+ rows.sort((a,b)=>{const ka=key[eff](a),kb=key[eff](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
  document.getElementById('n').textContent=rows.length;
  grid.innerHTML='';
  rows.forEach((d,i)=>{
-  const im=(d.image_urls||[]).length,zc=d.zona?('z'+d.zona):'',b=bucket(d),mv=+(d.votes[ME]||0);
+  const im=(d.image_urls||[]).length,zc=d.zona?('z'+d.zona):'',b=bucket(d);
   const c=document.createElement('div');c.className='card'+(b==='top'?' top':'')+(b==='out'?' out':'');c.dataset.id=d.id;
-  const tally=tallyHtml(d);
   const sc=cum(d);
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
@@ -164,11 +197,10 @@ function render(){
     <span class="chip ${zc}">${d.zlabel}</span>
     <span class="chip">4-sides: <b>${d.fs}</b></span>
    </div><div class="rsn">${d.reason||''}</div>
-   <div class="rate">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div class="rb${mv===n?' on':''}" data-v="${n}"${mv===n?` style="background:${gradeColor(n)};border-color:${gradeColor(n)};color:#0f1115"`:''}>${n}</div>`).join('')}</div>
-   <div class="tally">${tally}</div></div>
+   <div class="votewrap">${voteSection(d)}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
   c.addEventListener('click',()=>{if(c._block&&Date.now()-c._block<450)return;window.open(d.url,'_blank','noopener');});
-  c.querySelectorAll('.rb').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();c._block=Date.now();setVote(d,+btn.dataset.v);}));
+  bindVote(d,c);
   if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count'),hero=c.querySelector('.hero');
    const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
    c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);c._block=Date.now();});
@@ -183,20 +215,21 @@ function render(){
 }
 document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;render();}));
-['reg','sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+document.querySelectorAll('#areas .ac').forEach(ch=>ch.addEventListener('click',()=>{const a=ch.dataset.a;if(selectedAreas.has(a)){selectedAreas.delete(a);ch.classList.remove('on');}else{selectedAreas.add(a);ch.classList.add('on');}render();}));
+['sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 (async()=>{
  RINGS=await (await fetch('/api/outline')).json();setupProj();meBox();
  if(!ME)askWho();
  D=await (await fetch('/api/listings')).json();
  D.sort((a,b)=>(b.score||0)-(a.score||0));D.forEach((d,i)=>d.rank=i+1);   // persistent rank by match score
  render();
- let voteSig=JSON.stringify(D.map(d=>[d.id,d.votes]));
+ let voteSig=JSON.stringify(D.map(d=>[d.id,d.votes,d.comments]));
  setInterval(async()=>{try{
    const fresh=await (await fetch('/api/listings')).json();
-   const nsig=JSON.stringify(fresh.map(f=>[f.id,f.votes]));
+   const nsig=JSON.stringify(fresh.map(f=>[f.id,f.votes,f.comments]));
    if(nsig===voteSig)return;            // nothing changed -> don't disturb the view
-   voteSig=nsig;const vm={};fresh.forEach(f=>vm[f.id]=f.votes);
-   D.forEach(d=>{if(vm[d.id]&&JSON.stringify(vm[d.id])!==JSON.stringify(d.votes)){d.votes=vm[d.id];refreshVotes(d);}});  // update in place, no reorder
+   voteSig=nsig;const vm={},cm={};fresh.forEach(f=>{vm[f.id]=f.votes;cm[f.id]=f.comments;});
+   D.forEach(d=>{const a=JSON.stringify(d.votes)+'|'+JSON.stringify(d.comments||{}),b=JSON.stringify(vm[d.id]||{})+'|'+JSON.stringify(cm[d.id]||{});if(vm[d.id]!==undefined&&a!==b){d.votes=vm[d.id];d.comments=cm[d.id];refreshVotes(d);}});  // update in place, no reorder
  }catch(e){}},15000);
 })();
 </script></body></html>
