@@ -190,6 +190,7 @@ function pfPump(){while(pfAct<PFMAX&&PFQ.length){const u=PFQ.shift();pfAct++;con
 const pf=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const d=e.target._d;
   if(d&&!d._pf){d._pf=1;const n=(d.image_urls||[]).length;for(let i=1;i<n;i++)PFQ.push('/img/'+d.id+'/'+i);pfPump();}
   pf.unobserve(e.target);}});},{rootMargin:'350px'});
+function otherVote(d){if(!d.votes)return 0;let m=0;for(const w in d.votes){if(w!==ME){const n=+d.votes[w]||0;if(n>m)m=n;}}return m;}
 function bucket(d){const r=ratings(d);if(!r.length)return 'plain';const a=cum(d)/r.length;
  if(a>=7)return 'top';if(a<=3)return 'out';return 'plain';}
 function render(){
@@ -198,8 +199,9 @@ function render(){
  if(filter==='unrated')rows=rows.filter(d=>!(ME&&d.votes&&d.votes[ME]));  // hide ones I've rated
  const rf=document.getElementById('roundf').value;
  if(rf)rows=rows.filter(d=>String(d.round||1)===rf);
- const eff=(filter==='top')?'sum':sort;   // ⭐ Top = sort by cumulative sum
- const key={sum:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
+ // ⭐ Top = cumulative sum; 🆕 Unrated = the OTHER person's rating first (so their picks bubble up)
+ const eff=(filter==='top')?'sum':(filter==='unrated')?'other':sort;
+ const key={sum:d=>[-cum(d),-d.score],other:d=>[-otherVote(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
  rows.sort((a,b)=>{const ka=key[eff](a),kb=key[eff](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
  document.getElementById('n').textContent=rows.length;document.getElementById('cnt').textContent=rows.length+' matches';
  grid.innerHTML='';

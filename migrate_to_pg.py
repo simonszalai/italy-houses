@@ -41,9 +41,10 @@ def rows():
         WHERE a.criteria_hash=? AND a.verdict IN ('keep','maybe')""", (ch,)).fetchall()
     for r in q:
         sc = json.loads(r["scores_json"] or "{}"); fs = foursides.classify(r["description"])
-        # surface all keeps; for maybes only the genuine ones (mountain confirmed, decent confidence) —
-        # skip the photo-sparse maybes that couldn't be judged.
-        if r["verdict"] == "maybe" and not (sc.get("mountain_terrain") == "yes" and (sc.get("confidence") or 0) >= 0.55):
+        # PRIVACY-FORWARD: the couple rate forest_isolated / isolated countryside highly and
+        # edge_of_village low. Surface all keeps + private maybes (forest/countryside) regardless
+        # of photo confidence; skip edge_of_village and town maybes (consistently rated low).
+        if r["verdict"] == "maybe" and sc.get("setting") not in ("forest_isolated", "countryside"):
             continue
         g = r["garden_m2"]; band = bool(g and gmin <= g <= gmax)
         s = 0.0
@@ -52,7 +53,7 @@ def rows():
         elif not g: s += 0.5
         for k, v in (("exterior_sound", "yes"), ("roof_ok", "yes"), ("mountain_terrain", "yes")):
             if sc.get(k) == v: s += 2
-        if sc.get("setting") in ("forest_isolated", "countryside"): s += 2
+        s += {"forest_isolated": 4, "countryside": 3, "edge_of_village": -2}.get(sc.get("setting"), 0)
         if r["verdict"] == "keep": s += 2
         s += float(sc.get("confidence") or 0) * 2
         gz = c.execute("SELECT lat,lng FROM comune_geo WHERE comune_norm=?", (seismic.norm(r["town"] or ""),)).fetchone()
