@@ -95,6 +95,7 @@ h1{margin:0;font-size:20px;font-weight:650}
  <div class="bar">
   <span class="pill on" data-f="all">All</span>
   <span class="pill" data-f="top">⭐ Top</span>
+  <span class="pill" data-f="unrated">🆕 Unrated by me</span>
   <div class="ms" id="areaMs">
    <button class="msbtn" id="areaBtn">All areas ▾</button>
    <div class="mspanel" id="areaPanel" hidden>
@@ -193,6 +194,7 @@ function bucket(d){const r=ratings(d);if(!r.length)return 'plain';const a=cum(d)
 function render(){
  const sort=document.getElementById('sort').value;
  let rows=D.filter(d=>selectedAreas.size===0||selectedAreas.has(area(d.region)));
+ if(filter==='unrated')rows=rows.filter(d=>!(ME&&d.votes&&d.votes[ME]));  // hide ones I've rated
  const eff=(filter==='top')?'sum':sort;   // ⭐ Top = sort by cumulative sum
  const key={sum:d=>[-cum(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
  rows.sort((a,b)=>{const ka=key[eff](a),kb=key[eff](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
