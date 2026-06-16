@@ -22,14 +22,27 @@ def round_of(fetched_at):
             r = num
     return r
 
+def round3_ids(c):
+    """Round 3 = the privacy-forward additions: private (forest/countryside) maybes that the
+    EARLIER surfacing rule (mountain_terrain=yes AND confidence>=0.55) had skipped. These only
+    appeared in the app in the privacy pass, so they are their own round regardless of fetch date."""
+    import json
+    ids = set()
+    for r in c.execute("SELECT listing_id, scores_json FROM assessments WHERE criteria_hash='v2-forest' AND verdict='maybe'"):
+        sc = json.loads(r["scores_json"] or "{}")
+        if sc.get("setting") in ("forest_isolated", "countryside") and not (sc.get("mountain_terrain") == "yes" and (sc.get("confidence") or 0) >= 0.55):
+            ids.add(r["listing_id"])
+    return ids
+
 def main():
     c = sq.connect()
     fa = {row["listing_id"]: row["fetched_at"] for row in
           c.execute("SELECT listing_id, fetched_at FROM detail_view WHERE site='idealista'")}
+    r3 = round3_ids(c)
     with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=30) as conn:
         conn.execute("ALTER TABLE listings ADD COLUMN IF NOT EXISTS round INT")
         ids = [r[0] for r in conn.execute("SELECT id FROM listings").fetchall()]
-        updates = [(round_of(fa.get(i)), i) for i in ids]
+        updates = [(3 if i in r3 else round_of(fa.get(i)), i) for i in ids]
         with conn.cursor() as cur:
             cur.executemany("UPDATE listings SET round=%s WHERE id=%s", updates)
         conn.commit()
