@@ -91,12 +91,12 @@ h1{margin:0;font-size:20px;font-weight:650}
 <header>
  <div class="htop">
   <div><h1>🏔️ Mountain houses — Sibillini, Alps & Apennines</h1>
-   <div class="sub">Detached · 100–200 m² · garden 500–2,000 m² · ≤30 min from mountains · under €120k · <b id="n">…</b> matches · tap a card to open · rate each 1–10</div></div>
+   <div class="sub"><b id="n">…</b> matches · <b>🎯 Best match</b> = our finder's ranking · <b>❤️ Top rated</b> = your + Sandii's scores · tap a card to open · rate 1–10</div></div>
   <div class="me" id="meBox"></div>
  </div>
  <div class="bar">
-  <span class="pill on" data-f="all">All</span>
-  <span class="pill" data-f="top">⭐ Top</span>
+  <span class="pill on" data-f="all">🎯 Best match</span>
+  <span class="pill" data-f="top">❤️ Top rated</span>
   <span class="pill" data-f="unrated">🆕 Unrated by me</span>
   <div class="ms" id="areaMs">
    <button class="msbtn" id="areaBtn">All areas ▾</button>
@@ -207,8 +207,9 @@ function render(){
  const iso=document.getElementById('isof').value;   // optional privacy collapse (default off → nothing hidden)
  if(iso==='iso')rows=rows.filter(d=>d.isolation==='isolated');
  else if(iso==='isosemi')rows=rows.filter(d=>d.isolation==='isolated'||d.isolation==='semi_isolated');
- // ⭐ Top = cumulative sum; 🆕 Unrated = the OTHER person's rating first (so their picks bubble up)
+ // ❤️ Top rated = cumulative vote sum; 🆕 Unrated = the OTHER person's rating first; 🎯 Best match = ranker score
  const eff=(filter==='top')?'sum':(filter==='unrated')?'other':sort;
+ document.getElementById('sort').style.display=(filter==='all')?'':'none';  // secondary sort only in Best match
  const key={sum:d=>[-cum(d),-d.score],other:d=>[-otherVote(d),-d.score],score:d=>-d.score,price:d=>d.price||9e9,garden:d=>-(d.garden_m2||0),km:d=>d.mtn_km};
  rows.sort((a,b)=>{const ka=key[eff](a),kb=key[eff](b);return Array.isArray(ka)?(ka[0]-kb[0]||ka[1]-kb[1]):(ka-kb);});
  document.getElementById('n').textContent=rows.length;document.getElementById('cnt').textContent=rows.length+' matches';
@@ -220,7 +221,7 @@ function render(){
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?d.image_urls[0]:''}">
     ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
-    <div class="rank">#${d.rank}</div>${sc?`<div class="score">Σ${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
+    <div class="rank">#${d.rank} · 🎯 ${d.score!=null?Math.round(d.score):'–'}</div>${sc?`<div class="score">❤️ ${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
    <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
    <div class="chips">
     <span class="chip"><b>${d.area||'?'}</b> m²</span>

@@ -61,8 +61,19 @@ def rows():
         elif not g: s += 0.5
         for k, v in (("exterior_sound", "yes"), ("roof_ok", "yes"), ("mountain_terrain", "yes")):
             if sc.get(k) == v: s += 2
-        s += {"isolated": 5, "semi_isolated": 1, "close_neighbors": -4, "hamlet": -5, "town": -6}.get(iso, 0)
-        if sc.get("visible_neighbors") == "none": s += 1   # confirmed zero neighbours
+        # The 3 absolute favourites (Valdastico, Viola, +) and the liked set are UNANIMOUS:
+        # a STONE baita/farmhouse standing COMPLETELY ALONE in forest on a mountain slope.
+        # Tune hard toward that archetype: isolated >> semi, forest >> countryside, stone >> modern.
+        s += {"isolated": 7, "semi_isolated": 1, "close_neighbors": -4, "hamlet": -5, "town": -6}.get(iso, 0)
+        if sc.get("visible_neighbors") == "none": s += 2          # truly zero neighbours
+        s += {"forest_isolated": 4, "countryside": 1.5}.get(sc.get("setting"), 0)
+        # stone/rustic character (the defining trait) — read from the vision analysis, which is
+        # reliable (idealista descriptions are often cookie-banner noise).
+        vtext = ((r["reasons"] or "") + " " + (r["description"] or "")).lower()
+        if any(k in vtext for k in ("stone", "baita", "baite", "rustic", "cascina", "pietra", "sasso", "borgo")):
+            s += 4
+        if any(k in vtext for k in ("modern", "rendered", "plastered", "intonacat", "bungalow", "palazzina", "villa moderna")):
+            s -= 3
         if r["verdict"] == "keep": s += 2
         s += float(sc.get("confidence") or 0) * 2
         gz = c.execute("SELECT lat,lng FROM comune_geo WHERE comune_norm=?", (seismic.norm(r["town"] or ""),)).fetchone()
