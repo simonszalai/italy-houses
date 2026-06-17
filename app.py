@@ -4,9 +4,9 @@ Postgres-backed. Two people each vote like/maybe/dislike per listing (no auth â€
 device picks a name once); listings carry everyone's votes and a cumulative score.
 Env: DATABASE_URL.
 """
-import os, json, httpx
+import os, json
 from fastapi import FastAPI, Request, Response, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 
@@ -14,9 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DSN = os.environ["DATABASE_URL"]
 if "sslmode=" not in DSN:
     DSN += ("&" if "?" in DSN else "?") + "sslmode=require"
-pool = ConnectionPool(DSN, min_size=1, max_size=5, kwargs={"row_factory": dict_row}, open=True)
-UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-_imgcache = {}
+pool = ConnectionPool(DSN, min_size=1, max_size=3, kwargs={"row_factory": dict_row}, open=True)
 
 with pool.connection() as _c:
     _c.execute("""CREATE TABLE IF NOT EXISTS votes(
@@ -77,25 +75,12 @@ def outline():
 
 @app.get("/img/{lid}/{idx}")
 def img(lid: str, idx: int):
+    # Legacy fallback only â€” the client loads CDN image URLs directly now. A 302 redirect
+    # buffers NO image data server-side (the old proxy cached blobs in RAM and OOM'd the 512MB dyno).
     with pool.connection() as c:
         r = c.execute("SELECT image_urls FROM listings WHERE id=%s", (lid,)).fetchone()
-    if not r or idx >= len(r["image_urls"]): raise HTTPException(404)
-    url = r["image_urls"][idx]
-    if url in _imgcache:
-        return Response(_imgcache[url], media_type="image/jpeg", headers={"Cache-Control": "public,max-age=604800"})
-    data = None
-    for attempt in range(2):
-        try:
-            resp = httpx.get(url, headers={"User-Agent": UA, "Referer": "https://www.idealista.it/"}, timeout=25, follow_redirects=True)
-            if resp.status_code == 200 and resp.content:
-                data = resp.content; break
-        except Exception:
-            pass
-    if data is None:
-        raise HTTPException(502)
-    if len(_imgcache) < 4000:
-        _imgcache[url] = data
-    return Response(data, media_type="image/jpeg", headers={"Cache-Control": "public,max-age=604800"})
+    if not r or not r["image_urls"] or idx >= len(r["image_urls"]): raise HTTPException(404)
+    return RedirectResponse(r["image_urls"][idx])
 
 @app.get("/")
 def index():
