@@ -221,7 +221,7 @@ function render(){
   c.innerHTML=`<div class="hero">
     <img loading="lazy" src="${im?d.image_urls[0]:''}">
     ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
-    <div class="rank">#${d.rank} · 🎯 ${d.score!=null?Math.round(d.score):'–'}</div>${sc?`<div class="score">❤️ ${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
+    <div class="rank">#${d.pid!=null?d.pid:'?'} · 🎯 ${d.score!=null?Math.round(d.score):'–'}</div>${sc?`<div class="score">❤️ ${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
    <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
    <div class="chips">
     <span class="chip"><b>${d.area||'?'}</b> m²</span>

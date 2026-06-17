@@ -29,6 +29,7 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS access TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS isolation TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS neighbors TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS source TEXT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS pid INT;
 CREATE TABLE IF NOT EXISTS shortlist(
   listing_id TEXT PRIMARY KEY, status TEXT, notes TEXT, updated_at TIMESTAMPTZ DEFAULT now());
 """
@@ -140,6 +141,13 @@ def main():
                 score=EXCLUDED.score,image_urls=EXCLUDED.image_urls,url=EXCLUDED.url,
                 verdict=EXCLUDED.verdict,setting=EXCLUDED.setting,alt=EXCLUDED.alt,access=EXCLUDED.access,
                 isolation=EXCLUDED.isolation,neighbors=EXCLUDED.neighbors,source=EXCLUDED.source""", data)
+        conn.commit()
+        # assign a STABLE persistent pid to any new row (existing pids never change — they're
+        # the listing's permanent display number, independent of ranking/score).
+        conn.execute("""WITH n AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY score DESC NULLS LAST, id) + COALESCE((SELECT MAX(pid) FROM listings),0) AS rn
+          FROM listings WHERE pid IS NULL)
+          UPDATE listings l SET pid=n.rn FROM n WHERE l.id=n.id""")
         conn.commit()
         n = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     print(f"migrated {len(data)} listings; table now has {n}")
