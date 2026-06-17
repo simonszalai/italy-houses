@@ -28,6 +28,7 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS alt INT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS access TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS isolation TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS neighbors TEXT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS source TEXT;
 CREATE TABLE IF NOT EXISTS shortlist(
   listing_id TEXT PRIMARY KEY, status TEXT, notes TEXT, updated_at TIMESTAMPTZ DEFAULT now());
 """
@@ -36,7 +37,7 @@ def rows():
     c = sq.connect(); crit = json.load(open(os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "searches", SEARCH, "criteria.json")))
     ch = sq.criteria_hash(crit); gmin, gmax = crit["garden_min"], crit["garden_max"]
-    q = c.execute("""SELECT a.listing_id, a.scores_json, a.reasons, a.verdict, d.description, d.price, d.area,
+    q = c.execute("""SELECT a.listing_id, a.site, a.scores_json, a.reasons, a.verdict, d.description, d.price, d.area,
         d.garden_m2, d.rooms, d.image_urls_json, lv.town, lv.province, lv.mtn_dist_km, lv.alt
         FROM assessments a JOIN detail_view d ON d.site=a.site AND d.listing_id=a.listing_id
         JOIN list_view lv ON lv.site=a.site AND lv.listing_id=a.listing_id
@@ -80,13 +81,16 @@ def rows():
             elif 300 <= a < 400 or 900 < a <= 1100: s += 1
         if g and 800 <= g <= 3000: s += 1.5   # they love a real garden / land to plant
         imgs = json.loads(r["image_urls_json"] or "[]")[:18]
+        site = r["site"]
+        url = (f"https://www.immobiliare.it/annunci/{r['listing_id']}/" if site == "immobiliare"
+               else f"https://www.idealista.it/immobile/{r['listing_id']}/")
         yield (r["listing_id"], SEARCH, r["price"], r["area"], g, band, r["rooms"], fs,
                r["town"], region, (sz["zona"] if sz else None),
                (ZLABEL.get(sz["zona"]) if sz else "n/a"), round(r["mtn_dist_km"] or 0),
                (gz["lat"] if gz else None), (gz["lng"] if gz else None), sc.get("interior_state"),
                (r["reasons"] or "")[:300], round(s, 2), json.dumps(imgs),
-               f"https://www.idealista.it/immobile/{r['listing_id']}/", r["verdict"], sc.get("setting"), r["alt"], acc,
-               iso, sc.get("visible_neighbors"))
+               url, r["verdict"], sc.get("setting"), r["alt"], acc,
+               iso, sc.get("visible_neighbors"), site)
 
 def assessed_ids():
     """All listing_ids that got a real (vision) verdict under the current criteria_hash."""
@@ -116,15 +120,15 @@ def main():
                 print(f"removed {len(to_del)} now-excluded unrated listings")
         with conn.cursor() as cur:
             cur.executemany("""INSERT INTO listings
-              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt,access,isolation,neighbors)
-              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt,access,isolation,neighbors,source)
+              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
               ON CONFLICT (id) DO UPDATE SET price=EXCLUDED.price,area=EXCLUDED.area,garden_m2=EXCLUDED.garden_m2,
                 garden_band=EXCLUDED.garden_band,rooms=EXCLUDED.rooms,fs=EXCLUDED.fs,town=EXCLUDED.town,
                 region=EXCLUDED.region,zona=EXCLUDED.zona,zlabel=EXCLUDED.zlabel,mtn_km=EXCLUDED.mtn_km,
                 lat=EXCLUDED.lat,lng=EXCLUDED.lng,interior=EXCLUDED.interior,reason=EXCLUDED.reason,
                 score=EXCLUDED.score,image_urls=EXCLUDED.image_urls,url=EXCLUDED.url,
                 verdict=EXCLUDED.verdict,setting=EXCLUDED.setting,alt=EXCLUDED.alt,access=EXCLUDED.access,
-                isolation=EXCLUDED.isolation,neighbors=EXCLUDED.neighbors""", data)
+                isolation=EXCLUDED.isolation,neighbors=EXCLUDED.neighbors,source=EXCLUDED.source""", data)
         conn.commit()
         n = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     print(f"migrated {len(data)} listings; table now has {n}")

@@ -37,6 +37,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 .chip.set{color:#a8d5e8;border-color:#2f4f5e}.chip.mb{color:#e8d6a8;border-color:#5e4f2f;font-weight:700}
 .chip.acc{color:#bfe6cd;border-color:#2f5e42}.chip.noacc{color:#e9b0a0;border-color:#5e2f2f;font-weight:700}
 .chip.iso{color:#bfe6cd;border-color:#2f5e42;font-weight:700}.chip.noiso{color:#e8b98a;border-color:#5e4326}
+.chip.src{color:#9aa3b2;border-color:#3a3f4a;font-style:italic}
 .rsn{color:var(--mut);font-size:12px;margin:2px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rate{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0 2px}
 .rb{flex:1 1 8%;min-width:25px;border:1px solid var(--line);background:var(--chip);color:var(--mut);border-radius:7px;padding:6px 0;font-size:12px;cursor:pointer;text-align:center;transition:.1s}
@@ -124,6 +125,7 @@ h1{margin:0;font-size:20px;font-weight:650}
 let D=[], RINGS=[], filter="all";
 const SETLBL={forest_isolated:"🌲 forest",countryside:"countryside",edge_of_village:"edge of village",town:"town"};
 const ISOLBL={isolated:"🏔️ isolated",semi_isolated:"semi-isolated",close_neighbors:"🏘️ neighbors near",hamlet:"🏘️ hamlet",town:"town"};
+const SRCLBL={idealista:"idealista",immobiliare:"immobiliare",greenacres:"green-acres"};
 let ME=localStorage.getItem('voter')||"";
 const fmt=n=>n?("€"+Number(n).toLocaleString("en-US")):"n/a";
 const ratings=d=>Object.values(d.votes||{}).map(Number).filter(x=>x>0);
@@ -191,7 +193,7 @@ const grid=document.getElementById('grid');
 const PFQ=[];let pfAct=0;const PFMAX=4;
 function pfPump(){while(pfAct<PFMAX&&PFQ.length){const u=PFQ.shift();pfAct++;const im=new Image();im.onload=im.onerror=()=>{pfAct--;pfPump();};im.src=u;}}
 const pf=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const d=e.target._d;
-  if(d&&!d._pf){d._pf=1;const n=(d.image_urls||[]).length;for(let i=1;i<n;i++)PFQ.push('/img/'+d.id+'/'+i);pfPump();}
+  if(d&&!d._pf){d._pf=1;const u=d.image_urls||[];for(let i=1;i<u.length;i++)PFQ.push(u[i]);pfPump();}
   pf.unobserve(e.target);}});},{rootMargin:'350px'});
 function otherVote(d){if(!d.votes)return 0;let m=0;for(const w in d.votes){if(w!==ME){const n=+d.votes[w]||0;if(n>m)m=n;}}return m;}
 function bucket(d){const r=ratings(d);if(!r.length)return 'plain';const a=cum(d)/r.length;
@@ -216,7 +218,7 @@ function render(){
   const c=document.createElement('div');c.className='card'+(b==='top'?' top':'')+(b==='out'?' out':'');c.dataset.id=d.id;
   const sc=cum(d);
   c.innerHTML=`<div class="hero">
-    <img loading="lazy" src="${im?`/img/${d.id}/0`:''}">
+    <img loading="lazy" src="${im?d.image_urls[0]:''}">
     ${im>1?`<button class="nav p">‹</button><button class="nav n">›</button><div class="count">1/${im}</div>`:''}
     <div class="rank">#${d.rank}</div>${sc?`<div class="score">Σ${sc}</div>`:''}<div class="price">${fmt(d.price)}</div></div>
    <div class="bd"><div class="loc">${d.town||'?'}</div><div class="reg">${d.region||''}</div>
@@ -230,13 +232,14 @@ function render(){
     <span class="chip ${zc}">${d.zlabel}</span>
     <span class="chip">4-sides: <b>${d.fs}</b></span>
     ${d.verdict==='maybe'?`<span class="chip mb">maybe</span>`:''}
+    ${d.source?`<span class="chip src">${SRCLBL[d.source]||d.source}</span>`:''}
    </div><div class="rsn">${d.reason||''}</div>
    <div class="votewrap">${voteSection(d)}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
   c.addEventListener('click',()=>{if(c._block&&Date.now()-c._block<450)return;window.open(d.url,'_blank','noopener');});
   bindVote(d,c);
   if(im>1){let idx=0;const img=c.querySelector('.hero img'),cnt=c.querySelector('.count'),hero=c.querySelector('.hero');
-   const show=n=>{idx=(n+im)%im;img.src=`/img/${d.id}/${idx}`;cnt.textContent=(idx+1)+'/'+im;};
+   const show=n=>{idx=(n+im)%im;img.src=d.image_urls[idx];cnt.textContent=(idx+1)+'/'+im;};
    c.querySelector('.nav.p').addEventListener('click',e=>{e.stopPropagation();show(idx-1);c._block=Date.now();});
    c.querySelector('.nav.n').addEventListener('click',e=>{e.stopPropagation();show(idx+1);c._block=Date.now();});
    let sx=0,sy=0;hero.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
