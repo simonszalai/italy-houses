@@ -234,6 +234,7 @@ function render(){
     <span class="chip">4-sides: <b>${d.fs}</b></span>
     ${d.verdict==='maybe'?`<span class="chip mb">maybe</span>`:''}
     ${d.source?`<span class="chip src">${SRCLBL[d.source]||d.source}</span>`:''}
+    <span class="chip src">id ${d.id}</span>
    </div><div class="rsn">${d.reason||''}</div>
    <div class="votewrap">${voteSection(d)}</div></div>
    <div class="foot"><span class="km">~${d.mtn_km} km to mountains</span>${italySvg(d)}</div>`;
