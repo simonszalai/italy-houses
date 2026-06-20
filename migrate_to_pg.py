@@ -13,6 +13,8 @@ ZLABEL = {"1": "Zona 1 (high)", "2": "Zona 2 (med)", "3": "Zona 3 (low)", "4": "
 # Preference weights learned from the couple's ratings/comments (loved set skews Piemonte,
 # alt ~450-800, garden present, drivable). Car access is their #1 stated dealbreaker.
 REGION_PREF = {"Piemonte": 2.5, "Lombardia": 1.5, "Toscana": 1.5, "Valle d'Aosta": 1.0, "Marche": 1.0}
+ALPINE_REGIONS = {"Piemonte", "Valle d'Aosta", "Lombardia", "Trentino-Alto Adige", "Veneto",
+                  "Friuli-Venezia Giulia", "Liguria"}
 DSN = os.environ["DATABASE_URL"]
 SEARCH = sys.argv[1] if len(sys.argv) > 1 else "sibillini-and-alps"
 
@@ -30,6 +32,7 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS isolation TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS neighbors TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS source TEXT;
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS pid INT;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS category TEXT;
 CREATE TABLE IF NOT EXISTS shortlist(
   listing_id TEXT PRIMARY KEY, status TEXT, notes TEXT, updated_at TIMESTAMPTZ DEFAULT now());
 """
@@ -47,13 +50,23 @@ def rows():
         sc = json.loads(r["scores_json"] or "{}"); fs = foursides.classify(r["description"])
         if "isolation" not in sc:                  # cheap/rule drop or never vision-screened
             continue
-        # LEAST-AGGRESSIVE (v3): exclude ONLY the user's hard rejects — in-town, not free-standing,
-        # unsound shell, clearly non-mountainous. Neighbour-proximity (close_neighbors / hamlet) is
-        # kept but DEMOTED via score, so isolated homes rank far above without hiding workable ones.
         iso = sc.get("isolation")
-        if (iso in ("town", "hamlet") or fs == "no" or sc.get("free_standing_4_sides") == "no"
-                or sc.get("mountain_terrain") == "no"
-                or sc.get("exterior_sound") == "no" or sc.get("roof_ok") == "no"):
+        sz = seismic.lookup(r["town"], seismic.GEO_TO_SIGLA.get(r["province"]))
+        region = sz["region"] if sz else ""
+        vtext = ((r["reasons"] or "") + " " + (r["description"] or "")).lower()
+        # Two lists: ALPS (mountain + isolated, current) and TUSCANY (drop the mountain rule; instead
+        # REQUIRE nestled-in-forest). Apennine/other keep the Alps rule.
+        category = "tuscany" if region == "Toscana" else ("alps" if region in ALPINE_REGIONS else "apennine")
+        nestled_forest = (sc.get("setting") == "forest_isolated"
+                          or any(k in vtext for k in ("forest", "nestl", "woodland", "wooded", "bosc", " woods")))
+        # hard rejects for BOTH lists: in-town, not free-standing, unsound shell
+        if iso in ("town", "hamlet") or fs == "no" or sc.get("free_standing_4_sides") == "no" \
+                or sc.get("exterior_sound") == "no" or sc.get("roof_ok") == "no":
+            continue
+        if category == "tuscany":
+            if not nestled_forest:                 # Tuscany: forest is the criterion, not mountains
+                continue
+        elif sc.get("mountain_terrain") == "no":   # Alps/Apennine: require genuine mountain terrain
             continue
         g = r["garden_m2"]; band = bool(g and gmin <= g <= gmax)
         s = 0.0
@@ -69,9 +82,9 @@ def rows():
         s += {"isolated": 6, "semi_isolated": 3, "close_neighbors": -4, "hamlet": -5, "town": -6}.get(iso, 0)
         if sc.get("visible_neighbors") == "none": s += 2          # truly zero neighbours
         s += {"forest_isolated": 4, "countryside": 2}.get(sc.get("setting"), 0)
+        if category == "tuscany" and nestled_forest: s += 3   # forest is the whole point for the Tuscany list
         # stone/rustic character is a BONUS (most favourites are stone baite) but not required —
         # one favourite is a rendered villa, so only penalise clearly-suburban building types.
-        vtext = ((r["reasons"] or "") + " " + (r["description"] or "")).lower()
         if any(k in vtext for k in ("stone", "baita", "baite", "rustic", "cascina", "pietra", "sasso", "borgo")):
             s += 4
         if any(k in vtext for k in ("bungalow", "palazzina", "condominio", "apartment block", "villa moderna")):
@@ -79,14 +92,12 @@ def rows():
         if r["verdict"] == "keep": s += 2
         s += float(sc.get("confidence") or 0) * 2
         gz = c.execute("SELECT lat,lng FROM comune_geo WHERE comune_norm=?", (seismic.norm(r["town"] or ""),)).fetchone()
-        sz = seismic.lookup(r["town"], seismic.GEO_TO_SIGLA.get(r["province"]))
         if sz and sz["zona"] in ("3", "4"): s += 1
         if r["price"]: s += (crit["price_max"] - r["price"]) / 80000
         # --- preference signal from ratings/comments ---
         acc = access.classify(r["description"])
         if acc == "foot": s -= 6          # their #1 dealbreaker: can't drive to it
         elif acc == "car": s += 3
-        region = sz["region"] if sz else ""
         s += REGION_PREF.get(region, 0)
         a = r["alt"]
         if a is not None:
@@ -103,7 +114,7 @@ def rows():
                (gz["lat"] if gz else None), (gz["lng"] if gz else None), sc.get("interior_state"),
                (r["reasons"] or "")[:300], round(s, 2), json.dumps(imgs),
                url, r["verdict"], sc.get("setting"), r["alt"], acc,
-               iso, sc.get("visible_neighbors"), site)
+               iso, sc.get("visible_neighbors"), site, category)
 
 def assessed_ids():
     """All listing_ids that got a real (vision) verdict under the current criteria_hash."""
@@ -133,15 +144,15 @@ def main():
                 print(f"removed {len(to_del)} now-excluded unrated listings")
         with conn.cursor() as cur:
             cur.executemany("""INSERT INTO listings
-              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt,access,isolation,neighbors,source)
-              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+              (id,search,price,area,garden_m2,garden_band,rooms,fs,town,region,zona,zlabel,mtn_km,lat,lng,interior,reason,score,image_urls,url,verdict,setting,alt,access,isolation,neighbors,source,category)
+              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
               ON CONFLICT (id) DO UPDATE SET price=EXCLUDED.price,area=EXCLUDED.area,garden_m2=EXCLUDED.garden_m2,
                 garden_band=EXCLUDED.garden_band,rooms=EXCLUDED.rooms,fs=EXCLUDED.fs,town=EXCLUDED.town,
                 region=EXCLUDED.region,zona=EXCLUDED.zona,zlabel=EXCLUDED.zlabel,mtn_km=EXCLUDED.mtn_km,
                 lat=EXCLUDED.lat,lng=EXCLUDED.lng,interior=EXCLUDED.interior,reason=EXCLUDED.reason,
                 score=EXCLUDED.score,image_urls=EXCLUDED.image_urls,url=EXCLUDED.url,
                 verdict=EXCLUDED.verdict,setting=EXCLUDED.setting,alt=EXCLUDED.alt,access=EXCLUDED.access,
-                isolation=EXCLUDED.isolation,neighbors=EXCLUDED.neighbors,source=EXCLUDED.source""", data)
+                isolation=EXCLUDED.isolation,neighbors=EXCLUDED.neighbors,source=EXCLUDED.source,category=EXCLUDED.category""", data)
         conn.commit()
         # assign a STABLE persistent pid to any new row (existing pids never change — they're
         # the listing's permanent display number, independent of ranking/score).

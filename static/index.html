@@ -110,6 +110,7 @@ h1{margin:0;font-size:20px;font-weight:650}
    </div>
   </div>
   <select id="sort"><option value="score">Best match (rank)</option><option value="price">Cheapest</option><option value="garden">Biggest garden</option><option value="km">Closest to mountains</option></select>
+  <select id="catf"><option value="">All areas</option><option value="alps">🏔️ Alps (mountain)</option><option value="tuscany">🌲 Tuscany (forest)</option><option value="apennine">Apennines</option></select>
   <select id="roundf"><option value="">All rounds</option></select>
   <select id="isof"><option value="">Any privacy</option><option value="iso">🏔️ Isolated only</option><option value="isosemi">Isolated + semi</option></select>
   <span class="cnt" id="cnt"></span>
@@ -202,6 +203,8 @@ function render(){
  const sort=document.getElementById('sort').value;
  let rows=D.filter(d=>selectedAreas.size===0||selectedAreas.has(area(d.region)));
  if(filter==='unrated')rows=rows.filter(d=>!(ME&&d.votes&&d.votes[ME]));  // hide ones I've rated
+ const cf=document.getElementById('catf').value;
+ if(cf)rows=rows.filter(d=>d.category===cf);
  const rf=document.getElementById('roundf').value;
  if(rf)rows=rows.filter(d=>String(d.round||1)===rf);
  const iso=document.getElementById('isof').value;   // optional privacy collapse (default off → nothing hidden)
@@ -262,7 +265,7 @@ areaPanel.querySelectorAll('input').forEach(cb=>cb.onchange=()=>{
  if(cb.checked)selectedAreas.add(cb.value);else selectedAreas.delete(cb.value);
  areaBtn.textContent=(selectedAreas.size===0?'All areas':selectedAreas.size===1?AREALBL[[...selectedAreas][0]]:selectedAreas.size+' areas')+' \u25be';
  render();});
-['sort','roundf','isof'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+['sort','roundf','isof','catf'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 function fillRounds(){const rs=[...new Set(D.map(d=>d.round||1))].sort((a,b)=>a-b);
  const sel=document.getElementById('roundf');if(rs.length<2)return;
  sel.innerHTML='<option value="">All rounds</option>'+rs.map(r=>`<option value="${r}">Round ${r}${r===Math.max(...rs)?' (newest)':''}</option>`).join('');}
